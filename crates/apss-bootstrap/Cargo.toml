@@ -5,7 +5,10 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "APSS  -  Agent Paradise Standards System bootstrap CLI"
+description = "APSS, the Agent Paradise Standards System bootstrap CLI"
+readme = "README.md"
+keywords = ["standards", "validation", "architecture", "cli", "governance"]
+categories = ["development-tools", "command-line-utilities"]
 
 [[bin]]
 name = "apss"

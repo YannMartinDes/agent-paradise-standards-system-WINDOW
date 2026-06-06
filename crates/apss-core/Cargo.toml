@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "Core engine for APS validation, discovery, and diagnostics"
+readme = "README.md"
+keywords = ["standards", "validation", "architecture", "governance"]
+categories = ["development-tools"]
 
 [dependencies]
 thiserror.workspace = true
