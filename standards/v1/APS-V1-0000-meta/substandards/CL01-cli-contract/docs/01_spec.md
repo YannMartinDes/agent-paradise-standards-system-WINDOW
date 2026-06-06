@@ -332,6 +332,28 @@ aps run topology report .topology/ --format md
 
 ---
 
+## 10. Registered Commands Requirement
+
+Every standard linked into a composed consumer binary MUST register at least
+one CLI command through its `register()` function: `RegisteredStandard::commands`
+MUST be non-empty and the registered `CommandHandler::commands()` MUST return a
+non-empty list.
+
+A standard that intentionally ships no executable commands MUST declare it in
+its metadata file:
+
+```toml
+[cli]
+commands = "none"
+```
+
+Validation emits `CL_NO_REGISTERED_COMMANDS` (Error) for any linked standard
+that neither registers commands nor declares the exemption. Silence is never a
+pass. This check runs inside `v1 validate distribution` and therefore in QA,
+CI, and the release gate.
+
+---
+
 ## Appendix A: Error Codes
 
 Standard error codes for diagnostics:
