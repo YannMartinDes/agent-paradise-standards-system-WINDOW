@@ -23,6 +23,7 @@
 //! apss-dev v1 list
 //! ```
 
+mod cli_exemptions;
 mod vsa_config;
 
 use aps_v1_0000_meta::{MetaStandard, Standard};
