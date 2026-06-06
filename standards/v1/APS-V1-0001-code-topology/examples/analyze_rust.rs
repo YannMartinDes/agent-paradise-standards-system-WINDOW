@@ -6,7 +6,7 @@
 //! cargo run --example analyze_rust -- --path ../../..
 //! ```
 
-use code_topology_rust_adapter::{RustAdapter, RustAdapterConfig};
+use code_topology::substandards::lang_rust::{RustAdapter, RustAdapterConfig};
 use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

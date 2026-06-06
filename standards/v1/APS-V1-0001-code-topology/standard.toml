@@ -4,7 +4,7 @@ schema = "aps.standard/v1"
 id = "APS-V1-0001"
 name = "Code Topology and Coupling Analysis"
 slug = "code-topology"
-version = "0.1.0"
+version = "0.2.0"
 category = "technical"
 status = "active"
 
@@ -24,3 +24,19 @@ promoted_at = "2026-03-10"
 [[dependencies.allowed_external]]
 crate = "streaming-iterator"
 rationale = "Required by tree-sitter API for traversing syntax tree nodes"
+
+[[dependencies.allowed_external]]
+crate = "syn"
+rationale = "Optional dep behind lang-rust feature: parses Rust source for the merged LANG01 adapter (ADR-0002)"
+
+[[dependencies.allowed_external]]
+crate = "quote"
+rationale = "Optional dep behind lang-rust feature: token handling for the merged LANG01 adapter (ADR-0002)"
+
+[[dependencies.allowed_external]]
+crate = "proc-macro2"
+rationale = "Optional dep behind lang-rust feature: token handling for the merged LANG01 adapter (ADR-0002)"
+
+[[dependencies.allowed_external]]
+crate = "chrono"
+rationale = "Optional dep behind viz-dashboard feature: timestamps for the merged VIZ01 dashboard generator (ADR-0002)"

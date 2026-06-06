@@ -2,7 +2,7 @@
 //!
 //! Landing page linking to all visualization types with summary statistics.
 
-use crate::{health_label, health_to_color};
+use super::{health_label, health_to_color};
 
 /// Generate dashboard index HTML.
 ///

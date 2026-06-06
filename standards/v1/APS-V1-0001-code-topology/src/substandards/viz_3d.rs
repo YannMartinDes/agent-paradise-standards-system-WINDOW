@@ -13,7 +13,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use code_topology_3d::ForceDirectedProjector;
+//! use code_topology::substandards::viz_3d::ForceDirectedProjector;
 //! use code_topology::{Projector, OutputFormat};
 //!
 //! let projector = ForceDirectedProjector::new();
@@ -25,7 +25,7 @@
 
 use std::path::Path;
 
-use code_topology::{OutputFormat, Projector, ProjectorConfig, ProjectorError, Topology};
+use crate::{OutputFormat, Projector, ProjectorConfig, ProjectorError, Topology};
 use serde::{Deserialize, Serialize};
 
 /// Configuration for the 3D force-directed projector.

@@ -47,7 +47,35 @@ EXP-V1-0003 (Fitness Functions)
 └── Produces: fitness-report.json (threshold violations, exceptions, ratchets)
 ```
 
-## Quick Start
+## Using APSS in Your Project
+
+APSS delivers through two channels:
+
+- **crates.io delivers the tooling**: the `apss` CLI binary, built on `apss-core`. These are the only crates published to crates.io.
+- **APSS bundles deliver the standards**: standards, substandards, and experiments are distributed as versioned bundles, never as crates.io crates.
+
+```bash
+# One-time: install the global CLI
+cargo install apss
+
+# In your repo
+apss init        # generates APSS.yaml, the user-owned project manifest
+apss install     # resolves standards, writes apss.lock, installs git hooks
+apss validate    # validate the project (also runs from the pre-commit hook)
+apss status      # show project configuration and status
+```
+
+Until the public bundle registry ships, point installs at a locally built bundle directory:
+
+```bash
+apss install --bundle-dir /path/to/bundles
+```
+
+Commit `APSS.yaml` and `apss.lock`. The generated `.apss/` runtime is build output and stays out of git. Contributors to your repo can read, edit, and commit without installing the global CLI.
+
+The full lifecycle is specified in the [DI01 distribution substandard](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/01_spec.md) and the [package manager lifecycle doc](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/03_package_manager_lifecycle.md).
+
+## Quick Start (Developing APSS)
 
 ```bash
 # Build the CLI
@@ -74,7 +102,7 @@ agent-paradise-standards-system/
 │   ├── aps-core/                      # Core engine (diagnostics, discovery, templates)
 │   └── aps-cli/                       # CLI: aps run, aps v1 validate/create/promote
 ├── standards/v1/
-│   ├── APS-V1-0000-meta/             # Meta-standard (v1.1.0) — defines all V1 rules
+│   ├── APS-V1-0000-meta/             # Meta-standard (v1.1.0): defines all V1 rules
 │   └── APS-V1-0001-code-topology/    # Code topology + 5 substandards
 ├── standards-experimental/v1/
 │   ├── EXP-V1-0001-code-topology/    # Promoted → APS-V1-0001 (historical)
@@ -89,7 +117,7 @@ agent-paradise-standards-system/
 |------|-----------|-----------|---------|
 | **Standard** | `APS-V1-XXXX` | Full: `docs/`, `examples/`, `tests/`, `agents/skills/`, `src/` | Produces artifacts, defines rules |
 | **Substandard** | `APS-V1-XXXX.YY##` | Reduced: `docs/`, `src/` | Consumes parent artifacts, produces further output |
-| **Experiment** | `EXP-V1-XXXX` | Full (same as standard) | Incubating — not enforced on consumers |
+| **Experiment** | `EXP-V1-XXXX` | Full (same as standard) | Incubating: not enforced on consumers |
 
 Substandards inherit agent context and examples from their parent. Their `docs/01_spec.md` serves as agent-readable knowledge about what they consume and produce.
 
@@ -132,12 +160,12 @@ cargo run -p aps-cli -- v1 validate repo
 
 ## Documentation
 
-- [Meta-Standard Spec (v1.1.0)](standards/v1/APS-V1-0000-meta/docs/01_spec.md) — Normative rules for all V1 packages
-- [Code Topology Overview](standards/v1/APS-V1-0001-code-topology/docs/00_overview.md) — Architecture metrics and visualization
-- [Fitness Functions Overview](standards-experimental/v1/EXP-V1-0003-fitness-functions/docs/00_overview.md) — Declarative fitness thresholds
-- [Templates](standards/v1/APS-V1-0000-meta/templates/README.md) — Package scaffolding
-- [Experimental Standards](standards-experimental/v1/README.md) — Incubation and promotion
+- [Meta-Standard Spec (v1.1.0)](standards/v1/APS-V1-0000-meta/docs/01_spec.md): Normative rules for all V1 packages
+- [Code Topology Overview](standards/v1/APS-V1-0001-code-topology/docs/00_overview.md): Architecture metrics and visualization
+- [Fitness Functions Overview](standards-experimental/v1/EXP-V1-0003-fitness-functions/docs/00_overview.md): Declarative fitness thresholds
+- [Templates](standards/v1/APS-V1-0000-meta/templates/README.md): Package scaffolding
+- [Experimental Standards](standards-experimental/v1/README.md): Incubation and promotion
 
 ## License
 
-MIT — See [LICENSE](LICENSE) for details.
+MIT: See [LICENSE](LICENSE) for details.

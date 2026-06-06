@@ -13,23 +13,18 @@ path = "src/main.rs"
 
 [dependencies]
 apss-core.workspace = true
-aps-v1-0000-meta = { version = "1.2.0", path = "../../standards/v1/APS-V1-0000-meta" }
-code-topology = { package = "apss-v1-0001-code-topology", version = "0.1.0", path = "../../standards/v1/APS-V1-0001-code-topology" }
-code-topology-3d = { package = "apss-v1-0001-3d01-force-directed", version = "0.1.0", path = "../../standards/v1/APS-V1-0001-code-topology/substandards/3D01-force-directed" }
-code-topology-viz = { package = "apss-v1-0001-viz01-dashboard", version = "0.1.0", path = "../../standards/v1/APS-V1-0001-code-topology/substandards/VIZ01-dashboard" }
-code-topology-rust-adapter = { package = "apss-v1-0001-lang01-rust", version = "0.1.0", path = "../../standards/v1/APS-V1-0001-code-topology/substandards/LANG01-rust" }
-fitness-functions = { package = "apss-v1-0003-fitness-functions", version = "0.1.0", path = "../../standards-experimental/v1/EXP-V1-0003-fitness-functions" }
+aps-v1-0000-meta = { version = "1.3.0", path = "../../standards/v1/APS-V1-0000-meta" }
+code-topology = { package = "apss-v1-0001-code-topology", version = "0.2.0", path = "../../standards/v1/APS-V1-0001-code-topology" }
+fitness-functions = { package = "apss-v1-0003-fitness-functions", version = "0.2.0", path = "../../standards-experimental/v1/EXP-V1-0003-fitness-functions" }
 apss-project-config = { version = "1.0.0", path = "../../standards/v1/APS-V1-0000-meta/substandards/CF01-project-config" }
 apss-distribution = { version = "1.0.0", path = "../../standards/v1/APS-V1-0000-meta/substandards/DI01-distribution" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 walkdir.workspace = true
-chrono = "0.4.42"
-serde_yaml = { package = "serde_yaml_ng", version = "0.10" }
+toml.workspace = true
 
 [dev-dependencies]
 tempfile = "3.14"
-toml = "0.8"
 regex = "1.11"
 

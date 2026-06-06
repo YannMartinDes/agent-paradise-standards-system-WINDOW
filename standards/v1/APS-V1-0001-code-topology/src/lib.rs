@@ -39,7 +39,9 @@ use std::path::PathBuf;
 // ============================================================================
 
 pub mod adapter;
+pub mod cli;
 pub mod config;
+pub mod substandards;
 
 // ============================================================================
 // Error Codes
@@ -978,23 +980,10 @@ pub fn register(registry: &mut dyn apss_core::registry::StandardRegistry) {
             name: "Code Topology".to_string(),
             description: "Code topology analysis standard".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
-            commands: Vec::new(),
+            commands: cli::COMMAND_NAMES.iter().map(|s| s.to_string()).collect(),
         },
-        Box::new(NoopCommandHandler),
+        Box::new(cli::TopologyCommandHandler::new()),
     );
-}
-
-struct NoopCommandHandler;
-
-impl apss_core::registry::CommandHandler for NoopCommandHandler {
-    fn execute(&self, _command: &str, _args: &[String], _config: &toml::Value) -> i32 {
-        eprintln!("No composed CLI commands are registered for code-topology yet.");
-        5
-    }
-
-    fn commands(&self) -> Vec<apss_core::registry::CommandInfo> {
-        Vec::new()
-    }
 }
 
 #[cfg(test)]

@@ -40,3 +40,6 @@ aps-topology-3d.html
 coupling-3d.html
 .topology/
 topology-3d.html
+
+# Local agent planning context (not repo content)
+docs/superpowers/

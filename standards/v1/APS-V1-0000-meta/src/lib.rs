@@ -105,7 +105,21 @@ impl MetaStandard {
         use error_codes::*;
 
         let is_substandard = path.join("substandard.toml").exists();
-        let required_dirs = if is_substandard {
+        let has_cargo_toml = path.join("Cargo.toml").exists();
+
+        // A substandard of a published standard may be merged into the parent
+        // crate as a feature-gated module (ADR-0002). In that layout the
+        // substandard keeps `substandard.toml` and `docs/` as its governed-unit
+        // identity but has no `Cargo.toml` or `src/` of its own. A standalone
+        // `Cargo.toml`/`src/` per substandard is the layout for internal
+        // (unpublished) standards only. We detect the merged layout by a
+        // substandard that has no `Cargo.toml`, and relax the crate-level checks
+        // (src/, Cargo.toml, src/lib.rs, test coverage) for it.
+        let is_merged_substandard = is_substandard && !has_cargo_toml;
+
+        let required_dirs: &[&str] = if is_merged_substandard {
+            &["docs"]
+        } else if is_substandard {
             REQUIRED_SUBSTANDARD_DIRS
         } else {
             REQUIRED_STANDARD_DIRS
@@ -139,28 +153,31 @@ impl MetaStandard {
             );
         }
 
-        // Check for Cargo.toml
-        if !path.join("Cargo.toml").exists() {
-            diagnostics.push(
-                Diagnostic::error(
-                    MISSING_CARGO_TOML,
-                    "Missing Cargo.toml: standards must be Rust crates",
-                )
-                .with_path(path)
-                .with_hint("Create a Cargo.toml for this standard crate"),
-            );
-        }
+        // Check for Cargo.toml and src/lib.rs. Merged substandards (ADR-0002)
+        // have neither: their implementation lives in the parent crate under
+        // src/substandards/<module>/ behind a cargo feature.
+        if !is_merged_substandard {
+            if !has_cargo_toml {
+                diagnostics.push(
+                    Diagnostic::error(
+                        MISSING_CARGO_TOML,
+                        "Missing Cargo.toml: standards must be Rust crates",
+                    )
+                    .with_path(path)
+                    .with_hint("Create a Cargo.toml for this standard crate"),
+                );
+            }
 
-        // Check for src/lib.rs
-        if !path.join("src/lib.rs").exists() {
-            diagnostics.push(
-                Diagnostic::error(
-                    MISSING_LIB_RS,
-                    "Missing src/lib.rs: standards must implement the Standard trait",
-                )
-                .with_path(path.join("src/lib.rs"))
-                .with_hint("Create src/lib.rs with the Standard trait implementation"),
-            );
+            if !path.join("src/lib.rs").exists() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        MISSING_LIB_RS,
+                        "Missing src/lib.rs: standards must implement the Standard trait",
+                    )
+                    .with_path(path.join("src/lib.rs"))
+                    .with_hint("Create src/lib.rs with the Standard trait implementation"),
+                );
+            }
         }
 
         // Check for package README index
@@ -215,14 +232,16 @@ impl MetaStandard {
             }
         }
 
-        // §11.2: All packages MUST have test coverage (integration tests OR inline tests)
+        // §11.2: All crate-bearing packages MUST have test coverage (integration
+        // tests OR inline tests). Merged substandards (ADR-0002) carry no crate
+        // of their own; their tests live with the moved module in the parent.
         let has_test_dir_content = {
             let tests_dir = path.join("tests");
             tests_dir.exists() && !is_dir_empty_or_readme_only(&tests_dir)
         };
         let has_inline_tests = has_inline_tests_in_src(&path.join("src"));
 
-        if !has_test_dir_content && !has_inline_tests {
+        if !is_merged_substandard && !has_test_dir_content && !has_inline_tests {
             diagnostics.push(
                 Diagnostic::error(
                     EMPTY_TESTS_DIR,

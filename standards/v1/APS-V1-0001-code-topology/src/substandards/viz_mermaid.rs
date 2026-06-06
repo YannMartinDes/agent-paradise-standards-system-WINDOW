@@ -8,7 +8,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use code_topology_mermaid::MermaidProjector;
+//! use code_topology::substandards::viz_mermaid::MermaidProjector;
 //! use code_topology::{Projector, OutputFormat};
 //!
 //! let projector = MermaidProjector::new();
@@ -20,7 +20,7 @@
 
 use std::path::Path;
 
-use code_topology::{OutputFormat, Projector, ProjectorConfig, ProjectorError, Topology};
+use crate::{OutputFormat, Projector, ProjectorConfig, ProjectorError, Topology};
 use serde::{Deserialize, Serialize};
 
 /// Mermaid diagram style.

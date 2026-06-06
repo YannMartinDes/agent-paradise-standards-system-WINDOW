@@ -6,7 +6,7 @@
 //! - **Color** = health score (green → red gradient)
 //! - **Districts** = slices/packages (treemap layout with labeled ground planes)
 
-use crate::escape_json_for_html;
+use super::escape_json_for_html;
 
 /// Generate CodeCity HTML visualization.
 ///

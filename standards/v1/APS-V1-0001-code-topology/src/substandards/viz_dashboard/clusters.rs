@@ -6,7 +6,7 @@
 //! - **Size** = module count
 //! - **Color** = average health
 
-use crate::escape_json_for_html;
+use super::escape_json_for_html;
 
 /// Generate Package Clusters HTML visualization.
 ///

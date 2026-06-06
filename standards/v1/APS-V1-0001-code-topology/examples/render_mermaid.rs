@@ -6,11 +6,11 @@
 //! cargo run --example render_mermaid
 //! ```
 
+use code_topology::substandards::viz_mermaid::{DiagramStyle, MermaidConfig, MermaidProjector};
 use code_topology::{
     CouplingMatrixFile, MartinMetrics, ModuleMetrics, ModuleRecord, OutputFormat, Projector,
     Topology,
 };
-use code_topology_mermaid::{DiagramStyle, MermaidConfig, MermaidProjector};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

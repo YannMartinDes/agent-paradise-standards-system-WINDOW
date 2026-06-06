@@ -10,7 +10,7 @@
 //! - Interactive sidebar with module list and coupling filter
 //! - Click to focus, hover for tooltips
 
-use crate::escape_json_for_html;
+use super::escape_json_for_html;
 
 /// Generate 3D Force-Directed HTML visualization.
 ///

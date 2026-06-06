@@ -267,6 +267,78 @@ impl StandardRegistry for ProjectRunner {
     }
 }
 
+// ============================================================================
+// Registration Validation (CL01 poka-yoke, see issue #69 and ADR-0002)
+// ============================================================================
+
+/// Registry that records registrations without executing anything.
+///
+/// Used by validation to verify that each standard's `register()` actually
+/// exposes CLI commands through the CL01 contract.
+pub struct CollectorRegistry {
+    entries: Vec<(RegisteredStandard, Box<dyn CommandHandler>)>,
+}
+
+impl CollectorRegistry {
+    /// Create an empty collector.
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+
+    /// The recorded registrations.
+    pub fn entries(&self) -> &[(RegisteredStandard, Box<dyn CommandHandler>)] {
+        &self.entries
+    }
+}
+
+impl Default for CollectorRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl StandardRegistry for CollectorRegistry {
+    fn register(&mut self, standard: RegisteredStandard, handler: Box<dyn CommandHandler>) {
+        self.entries.push((standard, handler));
+    }
+}
+
+/// Validate that every collected registration exposes at least one command.
+///
+/// Standards in `exempt_ids` (those declaring `[cli] commands = "none"` in
+/// their metadata) are skipped. Silence is never a pass: a standard with no
+/// commands and no declaration is an error.
+pub fn validate_registered_commands(
+    entries: &[(RegisteredStandard, Box<dyn CommandHandler>)],
+    exempt_ids: &std::collections::HashSet<String>,
+) -> crate::diagnostics::Diagnostics {
+    use crate::diagnostics::{Diagnostic, Diagnostics};
+
+    let mut diags = Diagnostics::new();
+    for (info, handler) in entries {
+        if exempt_ids.contains(&info.id) {
+            continue;
+        }
+        if info.commands.is_empty() || handler.commands().is_empty() {
+            diags.push(
+                Diagnostic::error(
+                    "CL_NO_REGISTERED_COMMANDS",
+                    format!(
+                        "standard {} ({}) registers no CLI commands; the composed consumer binary cannot run it",
+                        info.id, info.slug
+                    ),
+                )
+                .with_hint(
+                    "populate RegisteredStandard::commands and CommandHandler::commands(), or declare `[cli]\ncommands = \"none\"` in the standard's metadata file",
+                ),
+            );
+        }
+    }
+    diags
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -356,5 +428,108 @@ mod tests {
         let args: Vec<String> = ["list"].iter().map(|s| s.to_string()).collect();
         let exit = runner.run(&args);
         assert_eq!(exit, 0);
+    }
+}
+
+#[cfg(test)]
+mod registered_commands_tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    struct StubHandler {
+        cmds: Vec<CommandInfo>,
+    }
+
+    impl CommandHandler for StubHandler {
+        fn execute(&self, _command: &str, _args: &[String], _config: &toml::Value) -> i32 {
+            0
+        }
+        fn commands(&self) -> Vec<CommandInfo> {
+            self.cmds.clone()
+        }
+    }
+
+    fn standard(id: &str, slug: &str, commands: Vec<String>) -> RegisteredStandard {
+        RegisteredStandard {
+            id: id.to_string(),
+            slug: slug.to_string(),
+            name: slug.to_string(),
+            description: "test standard".to_string(),
+            version: "0.1.0".to_string(),
+            commands,
+        }
+    }
+
+    fn handler_with(names: &[&str]) -> Box<dyn CommandHandler> {
+        Box::new(StubHandler {
+            cmds: names
+                .iter()
+                .map(|n| CommandInfo {
+                    name: n.to_string(),
+                    description: format!("{n} command"),
+                    usage: n.to_string(),
+                })
+                .collect(),
+        })
+    }
+
+    #[test]
+    fn flags_standard_with_no_commands() {
+        let mut collector = CollectorRegistry::new();
+        collector.register(
+            standard("APS-V1-9998", "stub", Vec::new()),
+            handler_with(&[]),
+        );
+
+        let diags = validate_registered_commands(collector.entries(), &HashSet::new());
+
+        assert!(diags.has_errors());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.code == "CL_NO_REGISTERED_COMMANDS" && d.message.contains("APS-V1-9998"))
+        );
+    }
+
+    #[test]
+    fn flags_mismatch_where_info_has_commands_but_handler_has_none() {
+        let mut collector = CollectorRegistry::new();
+        collector.register(
+            standard("APS-V1-9997", "halfstub", vec!["analyze".to_string()]),
+            handler_with(&[]),
+        );
+
+        let diags = validate_registered_commands(collector.entries(), &HashSet::new());
+
+        assert!(diags.has_errors());
+    }
+
+    #[test]
+    fn passes_standard_with_commands() {
+        let mut collector = CollectorRegistry::new();
+        collector.register(
+            standard("APS-V1-9996", "real", vec!["analyze".to_string()]),
+            handler_with(&["analyze"]),
+        );
+
+        let diags = validate_registered_commands(collector.entries(), &HashSet::new());
+
+        assert!(!diags.has_errors());
+    }
+
+    #[test]
+    fn exempted_standard_passes_with_no_commands() {
+        let mut collector = CollectorRegistry::new();
+        collector.register(
+            standard("APS-V1-9995", "docsonly", Vec::new()),
+            handler_with(&[]),
+        );
+
+        let mut exempt = HashSet::new();
+        exempt.insert("APS-V1-9995".to_string());
+
+        let diags = validate_registered_commands(collector.entries(), &exempt);
+
+        assert!(!diags.has_errors());
     }
 }

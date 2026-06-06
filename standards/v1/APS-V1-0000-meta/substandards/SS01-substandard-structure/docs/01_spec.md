@@ -1,6 +1,6 @@
 # APS-V1-0000.SS01 — Substandard Structure (Canonical Specification)
 
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Status**: Active  
 **Parent**: APS-V1-0000 (Meta-Standard)
 
@@ -65,7 +65,34 @@ APS-V1-0002.TS02  — Second TypeScript variant of APS-V1-0002
 
 ## 4. Package Layout
 
-Substandards MUST follow this directory structure:
+A substandard is always a first-class governed unit. Its governed-unit identity is its `substandard.toml` and its `docs/`, which are REQUIRED regardless of how the implementation is distributed. How the implementation is laid out depends on whether the parent standard is published.
+
+### 4.1 Published Standards (Feature-Module Layout)
+
+For a substandard of a published standard, the implementation MUST NOT be a separate published crate. The implementation lives inside the parent standard crate as a feature-gated module under `src/substandards/<module>/`, behind a cargo feature named after the substandard. The substandard directory keeps `substandard.toml` and `docs/` and MUST NOT carry its own `Cargo.toml` or `src/`:
+
+```
+standards/v1/{parent-id}-{parent-slug}/
+  Cargo.toml                # Parent crate manifest, declares the feature
+  src/
+    substandards/
+      {module}/             # Implementation behind `#[cfg(feature = "{feature}")]`
+        mod.rs
+  substandards/
+    {profile-code}-{slug}/
+      substandard.toml      # REQUIRED: Metadata (governed-unit identity)
+      docs/
+        00_overview.md      # RECOMMENDED: Overview
+        01_spec.md          # REQUIRED: Normative specification
+      examples/             # OPTIONAL: Substandard-specific examples
+      templates/            # OPTIONAL: Substandard-specific templates
+```
+
+The feature name and module path are derived from the substandard slug. Isolation between substandards is enforced at module level by the meta-standard validators rather than by crate boundaries. This layout is REQUIRED by ADR-0002, which establishes crates.io as the standard distribution transport and forbids per-substandard published crates.
+
+### 4.2 Internal Standards (Standalone Crate Layout)
+
+For a substandard of an internal (unpublished) standard, such as the meta-standard's own substandards, the standalone per-substandard crate layout remains valid. The implementation MAY live in its own crate alongside the governed-unit files:
 
 ```
 standards/v1/{parent-id}-{parent-slug}/
@@ -79,14 +106,18 @@ standards/v1/{parent-id}-{parent-slug}/
         00_overview.md      # RECOMMENDED: Overview
         01_spec.md          # REQUIRED: Normative specification
       examples/
-        README.md           # REQUIRED: Example index
+        README.md           # OPTIONAL: Example index
       tests/
-        README.md           # REQUIRED: Test requirements
+        README.md           # OPTIONAL: Test requirements
       agents/
         skills/
-          README.md         # REQUIRED: Agent skill instructions
+          README.md         # OPTIONAL: Agent skill instructions
       templates/            # OPTIONAL: Substandard-specific templates
 ```
+
+### 4.3 Validator Behavior
+
+The meta-standard structure validator distinguishes the two layouts by the presence of `Cargo.toml`. A substandard directory with no `Cargo.toml` is treated as a merged (feature-module) substandard: it requires only `docs/` as a directory, and the crate-level checks (`Cargo.toml`, `src/`, `src/lib.rs`, test coverage) are relaxed for it. A substandard directory that does carry a `Cargo.toml` is held to the standalone crate requirements of Section 4.2.
 
 ## 5. Metadata Schema
 
@@ -147,9 +178,9 @@ Substandard versions are independent of parent versions:
 ### 7.1 Structural Validation
 
 Substandards MUST pass all structural checks from the parent meta-standard:
-- Required directories exist
+- Required directories exist (per the applicable layout in Section 4)
 - Required files present
-- Rust crate compiles
+- For standalone (internal) substandards, the Rust crate compiles; for merged (feature-module) substandards, the parent crate compiles with the substandard's feature enabled
 
 ### 7.2 Metadata Validation
 
