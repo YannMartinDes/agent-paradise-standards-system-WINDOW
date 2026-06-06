@@ -12,7 +12,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use code_topology_rust_adapter::RustAdapter;
+//! use code_topology::substandards::lang_rust::RustAdapter;
 //!
 //! let adapter = RustAdapter::new();
 //! let result = adapter.analyze(Path::new("my-rust-project"))?;
@@ -31,7 +31,7 @@ use syn::{self, Expr, Item, Stmt};
 use thiserror::Error;
 use walkdir::WalkDir;
 
-use code_topology::HalsteadMetrics;
+use crate::HalsteadMetrics;
 
 // ============================================================================
 // Error Types

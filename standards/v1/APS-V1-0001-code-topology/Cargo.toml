@@ -12,10 +12,12 @@ name = "code_topology"
 
 
 [features]
-default = ["ci-github-actions", "viz-mermaid", "viz-3d"]
+default = ["ci-github-actions", "viz-mermaid", "viz-3d", "lang-rust", "viz-dashboard"]
 ci-github-actions = []
 viz-mermaid = []
 viz-3d = []
+lang-rust = ["dep:syn", "dep:quote", "dep:proc-macro2", "dep:walkdir"]
+viz-dashboard = ["dep:chrono"]
 
 [dependencies]
 apss-core.workspace = true
@@ -31,9 +33,22 @@ tree-sitter-python.workspace = true
 tree-sitter-typescript.workspace = true
 streaming-iterator = "0.1"
 
+# LANG01-rust (lang-rust feature)
+syn = { version = "2", features = [
+    "full",
+    "parsing",
+    "visit",
+    "extra-traits",
+], optional = true }
+quote = { version = "1", optional = true }
+proc-macro2 = { version = "1", optional = true }
+walkdir = { workspace = true, optional = true }
+
+# VIZ01-dashboard (viz-dashboard feature)
+chrono = { version = "0.4", features = ["std"], optional = true }
+
 [dev-dependencies]
 tempfile = "3.14"
-code-topology-rust-adapter = { package = "apss-v1-0001-lang01-rust", path = "substandards/LANG01-rust" }
 
 [[example]]
 name = "render_sample"

@@ -3378,7 +3378,10 @@ fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, verbose: bool)
                 }
                 let modules_json = serde_json::to_string_pretty(&viz_modules).unwrap_or_default();
                 let coupling_json = serde_json::to_string_pretty(&matrix_file).unwrap_or_default();
-                let html = code_topology_viz::codecity::generate(&modules_json, &coupling_json);
+                let html = code_topology::substandards::viz_dashboard::codecity::generate(
+                    &modules_json,
+                    &coupling_json,
+                );
                 let out = if viz_type == "all" {
                     viz_dir.join("codecity.html")
                 } else {
@@ -3392,7 +3395,10 @@ fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, verbose: bool)
                 }
                 let modules_json = serde_json::to_string_pretty(&viz_modules).unwrap_or_default();
                 let coupling_json = serde_json::to_string_pretty(&matrix_file).unwrap_or_default();
-                let html = code_topology_viz::clusters::generate(&modules_json, &coupling_json);
+                let html = code_topology::substandards::viz_dashboard::clusters::generate(
+                    &modules_json,
+                    &coupling_json,
+                );
                 let out = if viz_type == "all" {
                     viz_dir.join("clusters.html")
                 } else {
@@ -3452,7 +3458,7 @@ fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, verbose: bool)
                     }
                     let modules_json =
                         serde_json::to_string_pretty(&vsa_modules).unwrap_or_default();
-                    code_topology_viz::vsa::generate(&modules_json)
+                    code_topology::substandards::viz_dashboard::vsa::generate(&modules_json)
                 } else {
                     // No vsa.yaml  -  render placeholder
                     generate_vsa_placeholder()
@@ -3511,8 +3517,12 @@ fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, verbose: bool)
             })
             .unwrap_or_else(|| "Project".to_string());
 
-        let index_html =
-            code_topology_viz::index::generate(&repo_name, total_modules, slices.len(), avg_health);
+        let index_html = code_topology::substandards::viz_dashboard::index::generate(
+            &repo_name,
+            total_modules,
+            slices.len(),
+            avg_health,
+        );
         let index_path = viz_dir.join("index.html");
         if let Err(e) = fs::write(&index_path, &index_html) {
             eprintln!("Error writing index: {e}");

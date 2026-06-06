@@ -5,7 +5,7 @@
 //! - **Rows** = architectural layers
 //! - **Cells** = module count with health indicator
 
-use crate::escape_json_for_html;
+use super::escape_json_for_html;
 
 /// Generate VSA Diagram HTML visualization.
 ///

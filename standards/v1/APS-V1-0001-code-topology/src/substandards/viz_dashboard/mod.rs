@@ -14,7 +14,7 @@
 //! ## Usage
 //!
 //! ```ignore
-//! use code_topology_viz::{force_3d, codecity, clusters, vsa, index};
+//! use code_topology::substandards::viz_dashboard::{force_3d, codecity, clusters, vsa, index};
 //!
 //! let modules_json = serde_json::to_string(&modules)?;
 //! let coupling_json = serde_json::to_string(&coupling)?;
