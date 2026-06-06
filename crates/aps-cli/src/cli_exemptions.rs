@@ -11,8 +11,6 @@ use std::path::Path;
 ///
 /// Returns the set of exempted standard IDs. Looks for `standard.toml` or
 /// `experiment.toml` directly inside each directory.
-// Wired into validate distribution in Task 3
-#[allow(dead_code)]
 pub fn collect_cli_exemptions(package_dirs: &[std::path::PathBuf]) -> HashSet<String> {
     let mut exempt = HashSet::new();
     for dir in package_dirs {

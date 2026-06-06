@@ -344,6 +344,22 @@ fn main() -> ExitCode {
                                 all_diags.merge(pkg_diags);
                             }
                         }
+
+                        // CL01 poka-yoke (issue #69, ADR-0002): every linked standard must
+                        // actually register CLI commands. Silence is never a pass.
+                        let mut collector = apss_core::registry::CollectorRegistry::new();
+                        code_topology::register(&mut collector);
+                        fitness_functions::register(&mut collector);
+
+                        let package_dirs: Vec<std::path::PathBuf> =
+                            packages.iter().map(|p| p.path.clone()).collect();
+                        let exempt = cli_exemptions::collect_cli_exemptions(&package_dirs);
+
+                        all_diags.merge(apss_core::registry::validate_registered_commands(
+                            collector.entries(),
+                            &exempt,
+                        ));
+
                         all_diags
                     }
                 };
