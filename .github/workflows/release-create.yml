@@ -3,19 +3,20 @@
 # =============================================================================
 #
 # Triggered when a PR merges into `release`. Creates git tags and publishes
-# changed crates to crates.io in dependency order.
+# APSS tooling crates to crates.io.
 #
 # Flow:
 #   1. Detect which crates had version bumps since last release tag
 #   2. Create git tags (system + per-standard/substandard)
 #   3. Create GitHub Release with changelog from merge commit
-#   4. Publish changed crates to crates.io (with approval gate)
+#   4. Publish APSS tooling to crates.io (with approval gate)
 #
-# Publishing order (respects dependency graph):
+# Publish scope (DI01 spec section 9.4): only APSS tooling crates are
+# published to crates.io, and only when the system version changed.
 #   Tier 1: apss-core
-#   Tier 2: meta substandard crates (CF01, DI01, CL01, SS01)
-#   Tier 3: standard + substandard crates
-#   Tier 4: apss bootstrap binary
+#   Tier 2: apss bootstrap binary
+# Standards, substandards, and experiments are distributed as APSS bundles,
+# never as crates.io crates. They still get git tags and release notes here.
 # =============================================================================
 
 name: Release Create
@@ -274,7 +275,7 @@ jobs:
   publish:
     name: Publish to crates.io
     needs: [detect-changes, create-release]
-    if: needs.detect-changes.outputs.has_changes == 'true'
+    if: needs.detect-changes.outputs.system_changed == 'true'
     runs-on: ubuntu-latest
     environment: release-publish
     steps:
@@ -282,53 +283,38 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
-      - name: Publish crates in dependency order
+      - name: Publish APSS tooling crates
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           set -euo pipefail
 
-          CHANGED='${{ needs.detect-changes.outputs.changed_crates }}'
+          VERSION="${{ needs.detect-changes.outputs.system_version }}"
 
-          publish_tier() {
-            local tier=$1
-            local crates
-            crates=$(echo "$CHANGED" | jq -r --argjson t "$tier" '.[] | select(.tier == $t) | .dir')
+          # DI01 spec section 9.4: only APSS tooling crates go to crates.io.
+          # Standards are distributed as APSS bundles.
+          publish_crate() {
+            local name="$1"
+            local dir="$2"
 
-            if [ -z "$crates" ]; then
-              echo "Tier $tier: no crates to publish"
+            echo "Publishing ${name}@${VERSION} from ${dir}..."
+
+            # Check if already published (idempotency)
+            if cargo search "$name" 2>/dev/null | grep -q "^${name} = \"${VERSION}\""; then
+              echo "  Already published - skipping"
               return
             fi
 
-            echo "=== Publishing tier $tier ==="
-            while IFS= read -r dir; do
-              if [ -z "$dir" ]; then continue; fi
-              local name
-              name=$(echo "$CHANGED" | jq -r --arg d "$dir" '.[] | select(.dir == $d) | .name')
-              local ver
-              ver=$(echo "$CHANGED" | jq -r --arg d "$dir" '.[] | select(.dir == $d) | .version')
+            cargo publish --manifest-path "$dir/Cargo.toml"
+            echo "  Published ${name}@${VERSION}"
 
-              echo "Publishing $name@$ver from $dir..."
-
-              # Check if already published (idempotency)
-              if cargo search "$name" 2>/dev/null | grep -q "^${name} = \"${ver}\""; then
-                echo "  Already published - skipping"
-                continue
-              fi
-
-              cargo publish --manifest-path "$dir/Cargo.toml" --allow-dirty
-              echo "  Published $name@$ver"
-
-              # Wait for crates.io index to update before next tier
-              sleep 30
-            done <<< "$crates"
+            # Wait for the crates.io index to update before the dependent crate
+            sleep 30
           }
 
-          # Publish in dependency order
-          publish_tier 1  # apss-core
-          publish_tier 2  # meta substandards (CF01, DI01, CL01, SS01)
-          publish_tier 3  # standards + substandards
-          publish_tier 4  # apss bootstrap binary
+          # Publish in dependency order (DI01 spec section 9.3)
+          publish_crate "apss-core" "crates/apss-core"  # tier 1
+          publish_crate "apss" "crates/apss-bootstrap"  # tier 2
 
           echo ""
-          echo "All crates published successfully."
+          echo "APSS tooling published successfully."
