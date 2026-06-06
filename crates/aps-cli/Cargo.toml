@@ -22,8 +22,6 @@ clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 walkdir.workspace = true
-chrono = "0.4.42"
-serde_yaml = { package = "serde_yaml_ng", version = "0.10" }
 toml.workspace = true
 
 [dev-dependencies]

@@ -16,15 +16,17 @@ default = ["ci-github-actions", "viz-mermaid", "viz-3d", "lang-rust", "viz-dashb
 ci-github-actions = []
 viz-mermaid = []
 viz-3d = []
-lang-rust = ["dep:syn", "dep:quote", "dep:proc-macro2", "dep:walkdir"]
+lang-rust = ["dep:syn", "dep:quote", "dep:proc-macro2"]
 viz-dashboard = ["dep:chrono"]
 
 [dependencies]
 apss-core.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 thiserror.workspace = true
 toml.workspace = true
+walkdir.workspace = true
 
 # Tree-sitter framework
 tree-sitter.workspace = true
@@ -42,7 +44,6 @@ syn = { version = "2", features = [
 ], optional = true }
 quote = { version = "1", optional = true }
 proc-macro2 = { version = "1", optional = true }
-walkdir = { workspace = true, optional = true }
 
 # VIZ01-dashboard (viz-dashboard feature)
 chrono = { version = "0.4", features = ["std"], optional = true }
