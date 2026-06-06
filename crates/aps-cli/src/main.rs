@@ -331,6 +331,19 @@ fn main() -> ExitCode {
                         let packages = discover_v1_packages(&repo_root);
                         let mut all_diags = Diagnostics::new();
                         for package in &packages {
+                            // Merged substandards (ADR-0002) are not separately
+                            // published: their code lives in the parent crate as a
+                            // feature module, so they carry `substandard.toml` and
+                            // `docs/` but no `Cargo.toml`. Skip publish and
+                            // release-readiness checks for them; the parent crate is
+                            // validated on its own iteration.
+                            let is_merged_substandard =
+                                package.path.join("substandard.toml").exists()
+                                    && !package.path.join("Cargo.toml").exists();
+                            if is_merged_substandard {
+                                continue;
+                            }
+
                             let mut pkg_diags =
                                 apss_distribution::validate_publishable_standard(&package.path);
                             pkg_diags.merge(apss_distribution::validate_release_readiness(
