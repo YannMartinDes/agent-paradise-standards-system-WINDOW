@@ -40,6 +40,7 @@ use std::path::PathBuf;
 
 pub mod adapter;
 pub mod config;
+pub mod substandards;
 
 // ============================================================================
 // Error Codes

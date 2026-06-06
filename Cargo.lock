@@ -190,18 +190,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "apss-v1-0001-ci01-github-actions"
-version = "0.1.0"
-dependencies = [
- "apss-core",
- "apss-v1-0001-code-topology",
- "serde",
- "serde_json",
- "tempfile",
- "toml",
-]
-
-[[package]]
 name = "apss-v1-0001-code-topology"
 version = "0.1.0"
 dependencies = [

@@ -11,6 +11,10 @@ description = "Code Topology and Coupling Analysis "
 name = "code_topology"
 
 
+[features]
+default = ["ci-github-actions"]
+ci-github-actions = []
+
 [dependencies]
 apss-core.workspace = true
 serde.workspace = true
