@@ -87,6 +87,7 @@ Agent Paradise Standards System (APSS) is a Rust workspace for executable, versi
 
 ## Agent Operating Notes
 
+- Treat `docs/superpowers/` (plans, specs, status sheets) as local working context only. It is gitignored; never commit it. ADRs under `standards/**/docs/adrs/` and runbooks under `docs/runbooks/` are repo content and do get committed.
 - Read nearby files before editing; preserve established naming, module layout, and diagnostic conventions.
 - Do not commit changes unless the user explicitly asks.
 - Do not modify generated or build-output directories such as `target/`.
