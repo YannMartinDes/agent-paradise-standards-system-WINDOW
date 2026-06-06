@@ -6,6 +6,8 @@
 //!
 //! ⚠️ EXPERIMENTAL: This standard is in incubation and may change significantly.
 
+pub mod cli;
+
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -670,23 +672,10 @@ pub fn register(registry: &mut dyn apss_core::registry::StandardRegistry) {
             name: "Fitness Functions".to_string(),
             description: "Architecture fitness functions experiment".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
-            commands: Vec::new(),
+            commands: cli::COMMAND_NAMES.iter().map(|s| s.to_string()).collect(),
         },
-        Box::new(NoopCommandHandler),
+        Box::new(cli::FitnessCommandHandler::new()),
     );
-}
-
-struct NoopCommandHandler;
-
-impl apss_core::registry::CommandHandler for NoopCommandHandler {
-    fn execute(&self, _command: &str, _args: &[String], _config: &toml::Value) -> i32 {
-        eprintln!("No composed CLI commands are registered for fitness-functions yet.");
-        5
-    }
-
-    fn commands(&self) -> Vec<apss_core::registry::CommandInfo> {
-        Vec::new()
-    }
 }
 
 #[cfg(test)]

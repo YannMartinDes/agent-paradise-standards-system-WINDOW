@@ -262,7 +262,7 @@ fn main() -> ExitCode {
 
             // Dispatch to standard CLI
             match resolve_standard(&slug) {
-                Some(info) => dispatch_standard_cli(&info, &args, &repo_root, cli.verbose),
+                Some(info) => dispatch_standard_cli(&info, &args, cli.verbose),
                 None => {
                     eprintln!("Error: Unknown standard '{slug}'");
                     eprintln!("Use 'apss-dev run --list' to see available standards.");
@@ -994,18 +994,13 @@ fn resolve_standard(slug: &str) -> Option<StandardCliInfo> {
 }
 
 /// Dispatch to a standard's CLI.
-fn dispatch_standard_cli(
-    info: &StandardCliInfo,
-    args: &[String],
-    repo_root: &std::path::Path,
-    verbose: bool,
-) -> ExitCode {
+fn dispatch_standard_cli(info: &StandardCliInfo, args: &[String], verbose: bool) -> ExitCode {
     let command = args.first().map(|s| s.as_str()).unwrap_or("--help");
     let cmd_args = if args.len() > 1 { &args[1..] } else { &[] };
 
     match info.slug {
         "topology" => dispatch_topology(command, cmd_args, verbose),
-        "fitness" => dispatch_fitness(command, cmd_args, repo_root, verbose),
+        "fitness" => dispatch_fitness(command, cmd_args, verbose),
         _ => {
             eprintln!("Error: Standard '{}' CLI not implemented", info.slug);
             ExitCode::FAILURE
@@ -1037,147 +1032,26 @@ fn dispatch_topology(command: &str, args: &[String], verbose: bool) -> ExitCode 
     ExitCode::from(code as u8)
 }
 
-/// Dispatch fitness function commands.
-fn dispatch_fitness(
-    command: &str,
-    args: &[String],
-    repo_root: &std::path::Path,
-    _verbose: bool,
-) -> ExitCode {
-    match command {
-        "--help" | "-h" | "help" => {
-            println!("Architecture Fitness Functions (EXP-V1-0003) v0.1.0");
-            println!();
-            println!("USAGE:");
-            println!("    apss-dev run fitness <COMMAND> [OPTIONS]");
-            println!();
-            println!("COMMANDS:");
-            println!("    validate <path>    Validate fitness rules against topology artifacts");
-            println!();
-            println!("OPTIONS:");
-            println!("    --config <file>    Path to fitness.toml (default: ./fitness.toml)");
-            println!("    --report <file>    Write JSON report to file");
-            println!("    --help             Show this help message");
-            ExitCode::SUCCESS
-        }
-        "validate" => {
-            // Parse flags and positional args separately to avoid
-            // `--config custom.toml .` misinterpreting "--config" as the path
-            let mut positional_path: Option<&str> = None;
-            let mut config_path: Option<std::path::PathBuf> = None;
-            let mut report_path: Option<&String> = None;
-            let mut i = 0;
-            while i < args.len() {
-                match args[i].as_str() {
-                    "--config" => {
-                        config_path = args.get(i + 1).map(std::path::PathBuf::from);
-                        i += 2;
-                    }
-                    "--report" => {
-                        report_path = args.get(i + 1);
-                        i += 2;
-                    }
-                    arg if !arg.starts_with('-') && positional_path.is_none() => {
-                        positional_path = Some(arg);
-                        i += 1;
-                    }
-                    _ => {
-                        i += 1;
-                    }
-                }
-            }
-            let path = positional_path.unwrap_or(".");
+/// Dispatch fitness commands through the standard's own command handler.
+///
+/// The fitness validate logic now lives in the fitness-functions crate behind
+/// `fitness_functions::cli::FitnessCommandHandler` (ADR-0002, issue #68/#69).
+/// aps-cli delegates here: it sets `APSS_VERBOSE` so the env-driven verbose flag
+/// survives the trait boundary, then converts the handler's `i32` exit code into
+/// an `ExitCode`.
+fn dispatch_fitness(command: &str, args: &[String], verbose: bool) -> ExitCode {
+    use apss_core::registry::CommandHandler;
 
-            let target = if std::path::Path::new(path).is_absolute() {
-                std::path::PathBuf::from(path)
-            } else {
-                repo_root.join(path)
-            };
-
-            // Resolve --config relative to target repo, not CWD
-            let config_path = config_path.map(|p| if p.is_absolute() { p } else { target.join(p) });
-
-            let validator =
-                match fitness_functions::FitnessValidator::load(&target, config_path.as_deref()) {
-                    Ok(v) => v,
-                    Err(e) => {
-                        eprintln!("Error: {e}");
-                        return ExitCode::FAILURE;
-                    }
-                };
-
-            let report = match validator.validate() {
-                Ok(r) => r,
-                Err(e) => {
-                    eprintln!("Error during validation: {e}");
-                    return ExitCode::FAILURE;
-                }
-            };
-
-            // Print human-readable summary
-            println!("Fitness Validation Report");
-            println!("========================\n");
-            for result in &report.results {
-                let status_icon = match result.status {
-                    fitness_functions::RuleStatus::Pass => "PASS",
-                    fitness_functions::RuleStatus::Fail => "FAIL",
-                    fitness_functions::RuleStatus::Warn => "WARN",
-                    fitness_functions::RuleStatus::Skip => "SKIP",
-                };
-                println!(
-                    "  [{status_icon}] {} ({})",
-                    result.rule_name, result.rule_id
-                );
-                for v in &result.violations {
-                    let exc = if v.excepted { " (excepted)" } else { "" };
-                    println!(
-                        "         {} = {} (threshold: {} {:?}){exc}",
-                        v.entity, v.actual, v.threshold, v.direction
-                    );
-                }
-            }
-
-            if !report.stale_exceptions.is_empty() {
-                println!("\nStale Exceptions:");
-                for s in &report.stale_exceptions {
-                    println!("  {} [{}]: {:?}", s.entity, s.rule_id, s.reason);
-                }
-            }
-
-            println!(
-                "\nSummary: {} passed, {} failed, {} warned, {} violations ({} excepted), {} stale exceptions",
-                report.summary.passed,
-                report.summary.failed,
-                report.summary.warned,
-                report.summary.total_violations,
-                report.summary.excepted_violations,
-                report.summary.stale_exceptions,
-            );
-
-            // Write JSON report if requested
-            if let Some(report_file) = report_path {
-                match serde_json::to_string_pretty(&report) {
-                    Ok(json) => {
-                        if let Err(e) = std::fs::write(report_file, json) {
-                            eprintln!("Error writing report: {e}");
-                        } else {
-                            println!("\nReport written to: {report_file}");
-                        }
-                    }
-                    Err(e) => eprintln!("Error serializing report: {e}"),
-                }
-            }
-
-            if fitness_functions::FitnessValidator::has_failures(&report) {
-                ExitCode::FAILURE
-            } else {
-                ExitCode::SUCCESS
-            }
-        }
-        other => {
-            eprintln!("Error: Unknown fitness command '{other}'");
-            eprintln!("Use 'apss-dev run fitness --help' for available commands.");
-            ExitCode::FAILURE
+    if verbose {
+        // SAFETY: aps-cli is single-threaded at this point (clap has parsed
+        // args and we have not spawned any threads), so setting an env var is
+        // safe here.
+        unsafe {
+            std::env::set_var("APSS_VERBOSE", "1");
         }
     }
+
+    let handler = fitness_functions::cli::FitnessCommandHandler::new();
+    let code = handler.execute(command, args, &toml::Value::Table(Default::default()));
+    ExitCode::from(code as u8)
 }
