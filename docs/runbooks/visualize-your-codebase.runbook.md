@@ -11,9 +11,7 @@ This runbook is written to be handed to a coding agent (for example Claude Code)
 - A target repository containing Rust (`.rs`) or Python (`.py`/`.pyi`) source files. Other languages are not yet supported by the analyzer.
 - Rust toolchain and Cargo installed (`cargo --version` succeeds).
 - Network access to crates.io for step 1.
-- Until the public bundle registry ships, a local checkout of the APSS repository is required for steps 2 and 5: `git clone https://github.com/AgentParadise/agent-paradise-standards-system`. Set `APSS_REPO` to its path.
-
-> **Current limitation (issue #68):** the composed consumer binary cannot yet execute standard commands (`apss run code-topology ...` reports no registered commands). Until #68 lands, analysis and visualization run through the `apss-dev` CLI built from the APSS repository checkout. Steps 5 and 6 use that path. Everything else uses the published `apss` CLI.
+- Until standard crates are published to crates.io (ADR-0002 Phase D), a local checkout of the APSS repository is required ONCE, for step 2 only: `git clone https://github.com/AgentParadise/agent-paradise-standards-system`. Set `APSS_REPO` to its path. Everything after step 2 uses the installed binaries with no checkout involvement.
 
 ## 1. Install the APSS CLI
 
@@ -64,13 +62,11 @@ Expected: `Validation passed.` and a status listing `code-topology  APS-V1-0001 
 
 ## 5. Run the Topology Analysis
 
-From the target repository root (note: `apss-dev` path until #68 lands):
+From the target repository root, using the project-local composed binary that `apss install` built:
 
 ```bash
-"$APSS_REPO/target/release/apss-dev" run topology analyze . --output .topology
+.apss/bin/apss run code-topology analyze .
 ```
-
-If the binary does not exist yet, build it first: `cargo build --release -p aps-cli` in `$APSS_REPO`.
 
 Expected output shape:
 
@@ -90,13 +86,13 @@ Artifacts produced: `.topology/manifest.toml`, `metrics/modules.json`, `metrics/
 3D coupling graph only:
 
 ```bash
-"$APSS_REPO/target/release/apss-dev" run topology viz .topology --type 3d
+.apss/bin/apss run code-topology viz .topology --type 3d
 ```
 
 Full dashboard (recommended):
 
 ```bash
-"$APSS_REPO/target/release/apss-dev" run topology viz .topology --type all
+.apss/bin/apss run code-topology viz .topology --type all
 ```
 
 Expected: HTML files under `.topology/viz/` (`index.html`, `topology-3d.html`, `codecity.html`, `clusters.html`, `vsa.html`); the dashboard opens in the default browser. The viz command takes the `.topology` directory path, not the repo root (issue #70 tracks this inconsistency).
@@ -128,7 +124,7 @@ Expected: validation output before the commit completes. Hook failures block the
 | `No supported source files found` | Target repo has no `.rs`/`.py` files at or below the analyzed path. Point `analyze` at the source root. |
 | `Standard 'topology' not found in APSS.yaml` | The consumer config uses the slug `code-topology`; `topology` is a dev-CLI alias only (issue #70). |
 | `No modules.json found at ./metrics/modules.json` | `viz` was given the repo root. Pass the `.topology` directory. |
-| `No composed CLI commands are registered` | Known gap, issue #68. Use the `apss-dev` path shown in steps 5 and 6 until it lands. |
+| `No composed CLI commands are registered` | Your `.apss/bin/apss` was built from a pre-0.2.0 bundle. Rebuild the bundle from a current checkout and rerun `apss install --bundle-dir`. |
 | `cargo install apss` fails on publish metadata | Update Rust; the workspace requires Rust 1.85+. |
 
 ## Related
@@ -136,4 +132,4 @@ Expected: validation output before the commit completes. Hook failures block the
 - Consumer flow overview: root `README.md`, section "Using APSS in Your Project"
 - Distribution lifecycle: `standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/03_package_manager_lifecycle.md`
 - Release acceptance testing: `docs/testing/apss-package-manual-acceptance-testing.runbook.md`
-- Tracking: #67 (runbooks), #68 (composed runtime commands), #70 (CLI UX)
+- Tracking: #67 (runbooks), #70 (CLI UX); #68 closed by ADR-0002 Phase C (consumer binary runs all commands)
