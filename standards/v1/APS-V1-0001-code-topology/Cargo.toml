@@ -12,8 +12,10 @@ name = "code_topology"
 
 
 [features]
-default = ["ci-github-actions"]
+default = ["ci-github-actions", "viz-mermaid", "viz-3d"]
 ci-github-actions = []
+viz-mermaid = []
+viz-3d = []
 
 [dependencies]
 apss-core.workspace = true
@@ -31,8 +33,6 @@ streaming-iterator = "0.1"
 
 [dev-dependencies]
 tempfile = "3.14"
-code-topology-3d = { package = "apss-v1-0001-3d01-force-directed", path = "substandards/3D01-force-directed" }
-code-topology-mermaid = { package = "apss-v1-0001-viz01-mermaid", path = "substandards/VIZ01-mermaid" }
 code-topology-rust-adapter = { package = "apss-v1-0001-lang01-rust", path = "substandards/LANG01-rust" }
 
 [[example]]

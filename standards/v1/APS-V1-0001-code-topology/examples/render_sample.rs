@@ -7,11 +7,11 @@
 //! open coupling-3d.html
 //! ```
 
+use code_topology::substandards::viz_3d::ForceDirectedProjector;
 use code_topology::{
     CouplingMatrixFile, MartinMetrics, ModuleMetrics, ModulesFile, OutputFormat, Projector,
     Topology,
 };
-use code_topology_3d::ForceDirectedProjector;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -6,7 +6,7 @@
 mod fixtures;
 
 use aps_v1_0000_meta::{MetaStandard, Standard};
-use apss_core::discovery::discover_v1_packages;
+use apss_core::discovery::{PackageType, discover_v1_packages};
 use fixtures::repo_root;
 use std::process::Command;
 
@@ -99,17 +99,28 @@ fn test_all_standards_have_required_files() {
     let packages = discover_v1_packages(&repo);
 
     for pkg in &packages {
-        // All packages need these
-        assert!(
-            pkg.path.join("Cargo.toml").exists(),
-            "{:?} missing Cargo.toml",
-            pkg.path.file_name()
-        );
-        assert!(
-            pkg.path.join("src/lib.rs").exists(),
-            "{:?} missing src/lib.rs",
-            pkg.path.file_name()
-        );
+        // Substandards of a published standard may be merged into the parent
+        // crate as feature-gated modules (ADR-0002). Such a substandard keeps
+        // its `substandard.toml` and `docs/` governed-unit identity but has no
+        // standalone `Cargo.toml`/`src/`. Only require crate files for packages
+        // that still carry their own `Cargo.toml`.
+        let is_merged_substandard =
+            pkg.package_type == PackageType::Substandard && !pkg.path.join("Cargo.toml").exists();
+
+        if !is_merged_substandard {
+            assert!(
+                pkg.path.join("Cargo.toml").exists(),
+                "{:?} missing Cargo.toml",
+                pkg.path.file_name()
+            );
+            assert!(
+                pkg.path.join("src/lib.rs").exists(),
+                "{:?} missing src/lib.rs",
+                pkg.path.file_name()
+            );
+        }
+
+        // Every governed unit, merged or not, keeps its spec.
         assert!(
             pkg.path.join("docs/01_spec.md").exists(),
             "{:?} missing docs/01_spec.md",

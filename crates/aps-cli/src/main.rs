@@ -3132,11 +3132,11 @@ fn get_slice_from_id(module_id: &str) -> String {
 
 /// Generate visualization from topology artifacts.
 fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, verbose: bool) -> ExitCode {
+    use code_topology::substandards::viz_3d::ForceDirectedProjector;
     use code_topology::{
         CouplingMatrixData, CouplingMatrixFile, MartinMetrics, ModuleMetrics, ModuleRecord,
         OutputFormat, Projector, Topology,
     };
-    use code_topology_3d::ForceDirectedProjector;
     use std::collections::HashMap;
     use std::fs;
     use std::path::{Path, PathBuf};
