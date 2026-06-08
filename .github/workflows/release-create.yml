@@ -351,8 +351,11 @@ jobs:
           # meta-standard (APS-V1-0000), its internal substandards, and
           # experiments (standards-experimental/), which must not be published.
           # apss-core is already published above, so standards resolve cleanly.
+          # The substandard exclusion (no "/substandards/" segment) matters:
+          # substandards ship as parent-crate cargo features and have no
+          # Cargo.toml, so cargo publish on their directory would fail.
           echo "$CHANGED_CRATES" | jq -c \
-            '[.[] | select((.dir | startswith("standards/v1/APS-V1-")) and (.dir | startswith("standards/v1/APS-V1-0000") | not))] | sort_by(.tier) | .[]' \
+            '[.[] | select((.dir | startswith("standards/v1/APS-V1-")) and (.dir | startswith("standards/v1/APS-V1-0000") | not) and (.dir | contains("/substandards/") | not))] | sort_by(.tier) | .[]' \
           | while read -r crate; do
               name=$(echo "$crate" | jq -r '.name')
               dir=$(echo "$crate" | jq -r '.dir')
