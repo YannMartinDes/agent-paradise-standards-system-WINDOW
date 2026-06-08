@@ -5,9 +5,9 @@ description: "Normative rules for Architecture Decision Record validation"
 
 # ADR Enforcement Specification
 
-**Substandard:** APS-V1-0003.AD01  
-**Parent:** APS-V1-0003 (Documentation and Context Engineering)  
-**Version:** 0.1.0  
+- **Substandard:** APS-V1-0003.AD01
+- **Parent:** APS-V1-0003 (Documentation and Context Engineering)
+- **Version:** 0.1.0
 
 Key words: MUST, MUST NOT, SHOULD, SHALL per [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 

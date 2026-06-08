@@ -746,12 +746,14 @@ Substandard codes are defined in their own specs.
 
 ## 11. CLI Interface
 
+This section specifies the full CLI surface this standard MUST expose. The `validate` and `index` subcommands are implemented today. The `install`, `uninstall`, and `hook` subcommands are a forward specification and are NOT yet implemented by the handler (planned follow-up, contract in Section 9 and [`02_install_contract.md`](02_install_contract.md)).
+
 ```bash
-aps run docs install [<repo-root>]                 # Install hook + default config (idempotent)
-aps run docs uninstall [<repo-root>]               # Remove hook (config preserved)
+aps run docs install [<repo-root>]                 # Planned (not yet implemented): install hook + default config (idempotent)
+aps run docs uninstall [<repo-root>]               # Planned (not yet implemented): remove hook (config preserved)
 aps run docs validate [<path>] [--json]            # Run validator (CI-friendly)
 aps run docs index [<path>] [--write]              # Run index generator
-aps run docs hook --staged                         # Hook entry point (used by pre-commit)
+aps run docs hook --staged                         # Planned (not yet implemented): hook entry point (used by pre-commit)
 ```
 
 Every command MUST emit the same diagnostics shape as the validator (Section 9.2).

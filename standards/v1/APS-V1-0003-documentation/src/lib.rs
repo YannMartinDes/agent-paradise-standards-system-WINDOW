@@ -26,7 +26,9 @@ use std::path::{Path, PathBuf};
 /// Canonical standard identifier.
 pub const ID: &str = "APS-V1-0003";
 /// CLI slug used in `aps run <slug>` and as the matching key for dispatch.
-pub const SLUG: &str = "docs";
+/// Must equal the `slug` in standard.toml: the composed consumer runner matches
+/// this registered slug against the APSS.yaml standard key.
+pub const SLUG: &str = "documentation";
 /// Human-readable standard name.
 pub const NAME: &str = "Documentation and Context Engineering";
 /// Short standard description (shown by `aps run --list`).
@@ -36,8 +38,9 @@ pub const DESCRIPTION: &str =
 pub const COMMANDS: &str = "validate, index";
 /// Semver version, sourced from the Cargo package.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-/// Slug aliases accepted by `resolve_standard`.
-pub const ALIASES: &[&str] = &["documentation", "doc", "aps-v1-0003"];
+/// Slug aliases accepted by `resolve_standard` (the canonical slug is the
+/// SLUG const above; these are extra spellings the dev CLI also accepts).
+pub const ALIASES: &[&str] = &["docs", "doc", "aps-v1-0003"];
 
 /// Register this package with a composed APSS runner.
 ///

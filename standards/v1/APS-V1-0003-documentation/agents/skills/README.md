@@ -20,14 +20,15 @@ Skip this skill when the user is editing prose only; the hook handles correctnes
 
 ## Commands
 
+Implemented and runnable today (the canonical slug is `documentation`; `docs` and `doc` are accepted aliases):
+
 ```bash
-aps run docs validate [path]         # Validate structure. Exit 0 only when no errors.
-aps run docs index [path]            # Dry run: print indexes that would be written.
-aps run docs index [path] --write    # Rewrite README.md indexes in place.
-aps run docs install [path]          # Install hook + default config (idempotent).
-aps run docs uninstall [path]        # Remove hook block; preserve config.
-aps run docs hook --staged           # Hook entry point used by pre-commit (do not invoke by hand).
+apss run documentation validate [path]         # Validate structure. Exit 0 only when no errors.
+apss run documentation index [path]            # Dry run: print indexes that would be written.
+apss run documentation index [path] --write    # Rewrite README.md indexes in place.
 ```
+
+The `install`, `uninstall`, and `hook` subcommands are planned and NOT yet implemented by the handler (it currently provides `validate` and `index` only). Their contract is specified in [`docs/02_install_contract.md`](../../docs/02_install_contract.md).
 
 Every command emits diagnostics in the format defined in [Section 9.2 of the spec](../../docs/01_spec.md#92-validator-contract). Codes are human readable kebab strings (`index-stale`, `frontmatter-unclosed`, `ADR01-dir-not-found`).
 

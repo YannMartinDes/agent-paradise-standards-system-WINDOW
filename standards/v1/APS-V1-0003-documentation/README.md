@@ -25,16 +25,18 @@ This is an experimental standard under APS-V1-0003. The contract surface, doc ty
 - [`tests/`](tests/): integration tests covering frontmatter, indexing, README validation, root context, backlinking, and config parsing.
 - Per-substandard tests live inside each substandard crate (`substandards/<ID>/tests/`).
 
-## Install
+## Commands
 
 ```bash
-aps run docs install [path]          # install the pre-commit hook (idempotent)
-aps run docs uninstall [path]        # remove the hook (config preserved)
-aps run docs validate [path]         # validate docs structure
-aps run docs index [path]            # preview generated index tables (dry run)
-aps run docs index [path] --write    # write index tables into README.md files
-aps run docs hook --staged           # hook entry point used by pre-commit
+apss run documentation validate [path]       # validate docs structure and ADRs
+apss run documentation index [path]          # preview generated index tables (dry run)
+apss run documentation index [path] --write  # write index tables into README.md files
 ```
+
+The `docs` and `doc` slugs are accepted as aliases. Pre-commit hook installation
+is handled by `apss install` (the standard's validation runs from the generated
+hook); dedicated `install`/`uninstall`/`hook` subcommands are planned for a
+follow-up and are not yet implemented.
 
 ## Configuration
 

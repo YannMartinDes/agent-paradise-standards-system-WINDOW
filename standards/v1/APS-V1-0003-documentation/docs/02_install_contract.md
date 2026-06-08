@@ -5,6 +5,8 @@ description: "Normative contract for the docs validator, index generator, and gi
 
 # Install Contract (APS-V1-0003): Hook + Validator + Index
 
+> **Status: forward specification, not yet implemented.** This document specifies the hook install contract. The `install`, `uninstall`, and `hook` subcommands are a forward specification and are NOT yet implemented by the handler, which currently provides `validate` and `index` only. The rest of this document is the design of record for the planned installer.
+
 This document is the normative companion to `01_spec.md`. It defines the install entry point, the validator API, the index generator API, and the git pre-commit hook that ties them together. The working installer is a fast-follow PR; this document specifies what that installer MUST build.
 
 The contract has four parts:

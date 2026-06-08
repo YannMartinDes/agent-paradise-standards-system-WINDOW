@@ -126,14 +126,19 @@ example is in [`examples/APSS.yaml`](../examples/APSS.yaml).
 
 ## CLI
 
+Implemented and runnable today (the canonical slug is `documentation`;
+`docs` and `doc` are accepted aliases):
+
 ```bash
-aps run docs install [path]          # Install hook + default config (idempotent)
-aps run docs uninstall [path]        # Remove hook (config preserved)
-aps run docs validate [path]         # Validate documentation structure
-aps run docs index [path]            # Preview auto-generated indexes (dry run)
-aps run docs index [path] --write    # Write indexes into README.md files
-aps run docs hook --staged           # Hook entry point used by pre-commit
+apss run documentation validate [path]         # Validate documentation structure
+apss run documentation index [path]            # Preview auto-generated indexes (dry run)
+apss run documentation index [path] --write    # Write indexes into README.md files
 ```
+
+The `install`, `uninstall`, and `hook` subcommands are specified in
+[`02_install_contract.md`](02_install_contract.md) but are NOT yet
+implemented by the handler (planned follow-up). The handler currently
+provides `validate` and `index` only.
 
 The install contract, the validator contract, the index generator
 contract, and the per-doc-type definition of "valid structure" are
