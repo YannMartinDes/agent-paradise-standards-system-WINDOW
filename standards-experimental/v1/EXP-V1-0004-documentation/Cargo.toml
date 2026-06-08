@@ -1,0 +1,44 @@
+[package]
+name = "apss-v1-0004-documentation"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Documentation and Context Engineering - ADR enforcement, README/index validation, agent context (Experimental)"
+readme = "README.md"
+keywords = ["documentation", "adr", "context", "standards", "docs"]
+categories = ["development-tools"]
+
+[lib]
+name = "documentation"
+
+# Feature keys are the substandard profile codes (the id suffix after the dot).
+# The cargo feature name equals the substandard code: one source of truth, no
+# lookup table. A parity validator (DI_SUBSTANDARD_FEATURE_MISMATCH) enforces
+# that these keys stay equal to the substandard codes. See ADR-0002 and DI01.
+#
+# - AD01 -> Architecture Decision Records (the heavy substandard; needs glob)
+# - PV01 -> North Star (Mission, Vision, Position)
+# - RT01 -> Retrospectives
+[features]
+default = ["AD01", "PV01", "RT01"]
+AD01 = ["dep:glob"]
+PV01 = []
+RT01 = []
+
+[dependencies]
+apss-core.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml.workspace = true
+walkdir.workspace = true
+thiserror.workspace = true
+regex = "1"
+toml.workspace = true
+
+# AD01-architecture-decision-records (AD01 feature)
+glob = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = "3.14"
