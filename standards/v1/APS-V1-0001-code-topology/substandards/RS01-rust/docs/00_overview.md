@@ -1,8 +1,8 @@
 # RS01: Rust Language Adapter
 
-**Profile**: `RS` (Rust Language Adapter)  
-**Parent**: EXP-V1-0001 Code Topology  
-**Status**: Experimental
+- **Profile**: `RS` (Rust Language Adapter)
+- **Parent**: EXP-V1-0001 Code Topology
+- **Status**: Experimental
 
 ## Purpose
 
