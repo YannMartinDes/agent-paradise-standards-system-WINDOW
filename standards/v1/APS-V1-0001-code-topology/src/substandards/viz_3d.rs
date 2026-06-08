@@ -1,4 +1,4 @@
-//! 3D Force-Directed Coupling Visualization (EXP-V1-0001.3D01)
+//! 3D Force-Directed Coupling Visualization (APS-V1-0001.FD01)
 //!
 //! This projector renders the coupling matrix from code topology artifacts
 //! as an interactive 3D visualization using force-directed layout.

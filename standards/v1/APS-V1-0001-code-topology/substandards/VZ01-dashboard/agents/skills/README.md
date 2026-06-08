@@ -1,4 +1,4 @@
-# VIZ01-dashboard Agent Skills
+# VZ01-dashboard Agent Skills
 
 Agent skills for working with topology visualizations.
 

@@ -157,14 +157,14 @@ Substandard IDs are immutable.
 
 #### 4.2.1 Substandard Directory Naming
 
-Substandard directories SHOULD be prefixed with the parent standard number for discoverability in flat listings (Cargo workspace, search results):
+Substandard directories MUST be prefixed with the substandard profile code, the suffix after the last `.` in the substandard ID. The `id` field in `substandard.toml` is the single source of truth for the profile code:
 
 ```
-substandards/0001-VIZ01-dashboard/     # RECOMMENDED  -  parent visible
-substandards/VIZ01-dashboard/          # ALLOWED  -  parent inferred from path
+substandards/VZ01-dashboard/    # id = "APS-V1-0001.VZ01"  -  prefix VZ01 matches code VZ01
+substandards/RS01-rust/         # id = "APS-V1-0001.RS01"  -  prefix RS01 matches code RS01
 ```
 
-The prefix is the 4-digit parent standard number (matching `APS-V1-XXXX`).
+The directory prefix is the part before the first `-` in the directory name. It MUST equal the profile code. Validation emits `SS_SUBSTANDARD_DIR_CODE_MISMATCH` when they diverge. This keeps the directory name, the substandard ID, and any tooling that derives crate names or release tags from the directory in lockstep.
 
 ### 4.3 Experiment ID
 

@@ -1,4 +1,4 @@
-# VIZ01-dashboard Examples
+# VZ01-dashboard Examples
 
 ## Generating Visualizations
 

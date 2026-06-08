@@ -148,8 +148,19 @@ jobs:
               for sub in "$dir"/substandards/*/; do
                 [ -d "$sub" ] || continue
                 sub="${sub%/}"
-                profile=$(basename "$sub" | sed 's/-.*//')
-                sub_slug=$(basename "$sub" | sed 's/^[A-Z]*[0-9]*-//')
+                # The substandard.toml id is the single source of truth for the
+                # profile code. Read the code (suffix after the last '.') from it
+                # rather than the directory prefix so tags and crate names stay
+                # correct even if the directory name drifts.
+                profile=""
+                if [ -f "$sub/substandard.toml" ]; then
+                  profile=$(grep '^id' "$sub/substandard.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/' | sed 's/.*\.//')
+                fi
+                # Fallback to the directory prefix if no id is present.
+                if [ -z "$profile" ]; then
+                  profile=$(basename "$sub" | sed 's/-.*//')
+                fi
+                sub_slug=$(basename "$sub" | sed 's/^[A-Z0-9]*-//')
                 sub_crate="apss-${profile,,}-${sub_slug}"
 
                 if [ "$id" = "0000" ]; then

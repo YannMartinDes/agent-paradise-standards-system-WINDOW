@@ -1,4 +1,4 @@
-# VIZ01-dashboard Tests
+# VZ01-dashboard Tests
 
 ## Unit Tests
 

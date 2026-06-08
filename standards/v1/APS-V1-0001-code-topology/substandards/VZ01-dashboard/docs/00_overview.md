@@ -1,4 +1,4 @@
-# VIZ01-dashboard: Topology Visualization Dashboard
+# VZ01-dashboard: Topology Visualization Dashboard
 
 ## Overview
 

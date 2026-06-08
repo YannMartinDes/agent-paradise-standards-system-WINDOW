@@ -1,4 +1,4 @@
-# VIZ01-dashboard: Specification
+# VZ01-dashboard: Specification
 
 ## 1. Visualization Types
 

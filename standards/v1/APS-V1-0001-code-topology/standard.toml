@@ -27,16 +27,16 @@ rationale = "Required by tree-sitter API for traversing syntax tree nodes"
 
 [[dependencies.allowed_external]]
 crate = "syn"
-rationale = "Optional dep behind RS01 feature: parses Rust source for the merged LANG01 adapter (ADR-0002)"
+rationale = "Optional dep behind RS01 feature: parses Rust source for the merged RS01 adapter (ADR-0002)"
 
 [[dependencies.allowed_external]]
 crate = "quote"
-rationale = "Optional dep behind RS01 feature: token handling for the merged LANG01 adapter (ADR-0002)"
+rationale = "Optional dep behind RS01 feature: token handling for the merged RS01 adapter (ADR-0002)"
 
 [[dependencies.allowed_external]]
 crate = "proc-macro2"
-rationale = "Optional dep behind RS01 feature: token handling for the merged LANG01 adapter (ADR-0002)"
+rationale = "Optional dep behind RS01 feature: token handling for the merged RS01 adapter (ADR-0002)"
 
 [[dependencies.allowed_external]]
 crate = "chrono"
-rationale = "Optional dep behind VZ01 feature: timestamps for the merged VIZ01 dashboard generator (ADR-0002)"
+rationale = "Optional dep behind VZ01 feature: timestamps for the merged VZ01 dashboard generator (ADR-0002)"

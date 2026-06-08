@@ -34,10 +34,10 @@ Standards **produce artifacts** → substandards **consume them and produce furt
 APS-V1-0001 (Code Topology)
 ├── Produces: .topology/metrics/*.json, .topology/graphs/*.json
 │
-├── LANG01-rust          Rust source → topology data (input adapter)
-├── VIZ01-dashboard      .topology/ → HTML dashboard with CodeCity, 3D, clusters
-├── VIZ01-mermaid        .topology/graphs/ → Mermaid dependency diagrams
-├── 3D01-force-directed  .topology/metrics/ → WebGL 3D coupling visualization
+├── RS01-rust            Rust source → topology data (input adapter)
+├── VZ01-dashboard       .topology/ → HTML dashboard with CodeCity, 3D, clusters
+├── MM01-mermaid         .topology/graphs/ → Mermaid dependency diagrams
+├── FD01-force-directed  .topology/metrics/ → WebGL 3D coupling visualization
 └── CI01-github-actions  .topology/ → PR comment with diff analysis
 ```
 

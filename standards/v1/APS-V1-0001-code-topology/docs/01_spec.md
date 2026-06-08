@@ -45,7 +45,7 @@ This standard defines the **data format**. Visualization implementations are def
 
 | Substandard | Purpose |
 |-------------|---------|
-| `APS-V1-0001.3D01` | 3D Force-Directed Coupling Visualization |
+| `APS-V1-0001.FD01` | 3D Force-Directed Coupling Visualization |
 | `APS-V1-0001.GV01` | Graphviz/DOT Projector |
 | `APS-V1-0001.MM01` | Mermaid Diagram Projector |
 
@@ -1227,7 +1227,7 @@ pub struct ProjectorError {
 /// A projector renders topology data as visualizations.
 pub trait Projector: Send + Sync {
     /// Projector identifier (e.g., "graphviz", "3d-force").
-    /// MUST match the substandard profile code (e.g., "3D01" → "3d-force").
+    /// MUST match the substandard profile code (e.g., "FD01" → "3d-force").
     fn id(&self) -> &'static str;
     
     /// Human-readable name.
@@ -1516,7 +1516,7 @@ Projector substandards use profile codes indicating visualization type:
 
 | Profile | Description | Example |
 |---------|-------------|---------|
-| `3D##` | 3D visualizations | `APS-V1-0001.3D01` |
+| `FD##` | 3D force-directed visualizations | `APS-V1-0001.FD01` |
 | `GV##` | Graphviz-based | `APS-V1-0001.GV01` |
 | `MM##` | Mermaid diagrams | `APS-V1-0001.MM01` |
 | `WB##` | Web-based interactive | `APS-V1-0001.WB01` |
@@ -1527,7 +1527,7 @@ Projector substandards use profile codes indicating visualization type:
 ```
 standards-experimental/v1/APS-V1-0001-code-topology/
 └── substandards/
-    └── 3D01-force-directed/
+    └── FD01-force-directed/
         ├── substandard.toml      # REQUIRED: Metadata
         ├── Cargo.toml            # REQUIRED: Rust crate
         ├── src/
@@ -1552,7 +1552,7 @@ standards-experimental/v1/APS-V1-0001-code-topology/
 schema = "aps.substandard/v1"
 
 [substandard]
-id = "APS-V1-0001.3D01"
+id = "APS-V1-0001.FD01"
 name = "3D Force-Directed Coupling Visualization"
 slug = "force-directed"
 version = "0.1.0"
@@ -1573,7 +1573,7 @@ maintainers = ["AgentParadise"]
 
 | ID | Name | Description | Priority |
 |----|------|-------------|----------|
-| `APS-V1-0001.3D01` | Force-Directed 3D | Coupling matrix → 3D node layout | High |
+| `APS-V1-0001.FD01` | Force-Directed 3D | Coupling matrix → 3D node layout | High |
 | `APS-V1-0001.GV01` | Graphviz Projector | Graphs → DOT/SVG output | High |
 | `APS-V1-0001.MM01` | Mermaid Projector | Graphs → Mermaid diagrams | Medium |
 | `APS-V1-0001.WB01` | Web Dashboard | Interactive metrics explorer | Medium |
