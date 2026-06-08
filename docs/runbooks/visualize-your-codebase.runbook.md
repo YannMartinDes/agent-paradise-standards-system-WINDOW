@@ -6,6 +6,21 @@ Install APSS in a target repository, run the Code Topology standard (APS-V1-0001
 
 This runbook is written to be handed to a coding agent (for example Claude Code) verbatim. Every step has a command and an expected result. Run steps in order.
 
+## TL;DR (copy-paste)
+
+From the root of a repo that contains Rust or Python source:
+
+```bash
+cargo install apss                                  # one-time, needs apss 1.1.0+
+apss init --standard code-topology                  # creates APSS.yaml
+# edit APSS.yaml: set the code-topology id to APS-V1-0001 (see step 2)
+apss install                                        # resolves the standard from crates.io
+apss run code-topology analyze .                    # writes .topology/ artifacts
+apss run code-topology viz .topology --type all     # opens the dashboard
+```
+
+That is the whole flow. The sections below explain each step, the expected output, the heavy-artifact caveat, and the optional pre-commit hook. The single manual touch today is setting the standard id in step 2 (a slug-to-id catalog is tracked in issue #76).
+
 ## Audience and Prerequisites
 
 - A target repository containing Rust (`.rs`) or Python (`.py`/`.pyi`) source files. Other languages are not yet supported by the analyzer.
@@ -19,7 +34,7 @@ cargo install apss
 apss --version
 ```
 
-Expected: `apss 1.0.0` (or newer) on PATH.
+Expected: `apss 1.1.0` or newer on PATH. Version 1.1.0 is the first release that resolves standards from crates.io; on 1.0.0, `apss install` requires a local bundle (see the offline appendix). If you already have an older `apss`, `cargo install apss --force` upgrades it.
 
 ## 2. Initialize the Target Repository
 
