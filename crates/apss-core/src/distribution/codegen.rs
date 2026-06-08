@@ -140,6 +140,7 @@ fn generate_cargo_toml(
             // ship as feature modules, not separate crates). None means "all
             // substandards", which is cargo's default feature set, so we emit no
             // override. Some(list) restricts the build to the mapped features.
+            let version_req = render_dep_version_req(version);
             match feature_selection(standard) {
                 Some(features) => {
                     let rendered = features
@@ -148,13 +149,13 @@ fn generate_cargo_toml(
                         .collect::<Vec<_>>()
                         .join(", ");
                     content.push_str(&format!(
-                        "{ident} = {{ package = \"{}\", version = \"{version}\", default-features = false, features = [{rendered}] }}\n",
+                        "{ident} = {{ package = \"{}\", version = \"{version_req}\", default-features = false, features = [{rendered}] }}\n",
                         standard.crate_name
                     ));
                 }
                 None => {
                     content.push_str(&format!(
-                        "{ident} = {{ package = \"{}\", version = \"{version}\" }}\n",
+                        "{ident} = {{ package = \"{}\", version = \"{version_req}\" }}\n",
                         standard.crate_name
                     ));
                 }
@@ -249,6 +250,24 @@ fn standard_crate_ident(crate_name: &str) -> String {
 /// `default-features = false, features = [...]`.
 fn feature_selection(standard: &crate::resolution::ResolvedStandard) -> Option<Vec<String>> {
     standard.substandards.as_ref().cloned()
+}
+
+/// Render a lockfile version into a Cargo dependency requirement.
+///
+/// A resolved `apss.lock` pin is an exact version (e.g. `0.2.7`). Cargo would
+/// treat a bare `version = "0.2.7"` as a caret requirement (`^0.2.7`), so a
+/// fresh install with no `.apss/build/Cargo.lock` could resolve `0.2.8` and
+/// silently rewrite the pin. Emitting `=0.2.7` forces the exact version, so the
+/// APSS lockfile actually pins. A value that is not an exact semver version
+/// (a partial or ranged requirement like `0.2` or `>=1.0.0` used only on the
+/// initial unresolved resolution pass) is emitted unchanged so cargo can
+/// resolve it.
+fn render_dep_version_req(version: &str) -> String {
+    if semver::Version::parse(version).is_ok() {
+        format!("={version}")
+    } else {
+        version.to_string()
+    }
 }
 
 fn should_skip_dir(path: &Path) -> bool {
@@ -457,8 +476,18 @@ mod tests {
         let cargo = std::fs::read_to_string(temp.path().join("Cargo.toml")).unwrap();
         // Substandard codes pass through verbatim as cargo feature names.
         assert!(cargo.contains(
-            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"1.0.0\", default-features = false, features = [\"RS01\", \"FD01\"] }"
+            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"=1.0.0\", default-features = false, features = [\"RS01\", \"FD01\"] }"
         ));
+    }
+
+    #[test]
+    fn test_render_dep_version_req_pins_exact_versions() {
+        // Resolved exact pins must be forced exact so cargo cannot drift.
+        assert_eq!(render_dep_version_req("0.2.7"), "=0.2.7");
+        assert_eq!(render_dep_version_req("1.0.0"), "=1.0.0");
+        // Requirements/ranges used on the resolution pass pass through unchanged.
+        assert_eq!(render_dep_version_req("0.2"), "0.2");
+        assert_eq!(render_dep_version_req(">=1.0.0, <2.0.0"), ">=1.0.0, <2.0.0");
     }
 
     #[test]
@@ -472,7 +501,7 @@ mod tests {
 
         let cargo = std::fs::read_to_string(temp.path().join("Cargo.toml")).unwrap();
         assert!(cargo.contains(
-            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"1.0.0\" }"
+            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"=1.0.0\" }"
         ));
         assert!(!cargo.contains("default-features = false"));
         assert!(!cargo.contains("features = ["));
