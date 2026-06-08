@@ -1001,7 +1001,7 @@ fn resolve_standard(slug: &str) -> Option<StandardCliInfo> {
             name: "Architecture Fitness Functions",
             version: "0.1.0",
         }),
-        "docs" | "doc" | "documentation" | "exp-v1-0004" => Some(StandardCliInfo {
+        "docs" | "doc" | "documentation" | "aps-v1-0003" => Some(StandardCliInfo {
             id: documentation::ID,
             slug: "documentation",
             name: documentation::NAME,
@@ -1078,7 +1078,7 @@ fn dispatch_fitness(command: &str, args: &[String], verbose: bool) -> ExitCode {
 /// Dispatch documentation commands through the standard's own command handler.
 ///
 /// The doc validate/index logic now lives in the documentation crate behind
-/// `documentation::cli::DocumentationCommandHandler` (EXP-V1-0004, ADR-0002,
+/// `documentation::cli::DocumentationCommandHandler` (APS-V1-0003, ADR-0002,
 /// issue #68). aps-cli delegates here: it sets `APSS_VERBOSE` so the env-driven
 /// verbose flag survives the trait boundary, then converts the handler's `i32`
 /// exit code into an `ExitCode`.

@@ -79,8 +79,8 @@ dependencies = [
  "apss-distribution",
  "apss-project-config",
  "apss-v1-0001-code-topology",
+ "apss-v1-0003-documentation",
  "apss-v1-0003-fitness-functions",
- "apss-v1-0004-documentation",
  "clap",
  "regex",
  "serde",
@@ -215,21 +215,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "apss-v1-0003-fitness-functions"
-version = "0.2.0"
-dependencies = [
- "apss-core",
- "chrono",
- "glob",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
-]
-
-[[package]]
-name = "apss-v1-0004-documentation"
+name = "apss-v1-0003-documentation"
 version = "0.1.0"
 dependencies = [
  "apss-core",
@@ -242,6 +228,20 @@ dependencies = [
  "thiserror",
  "toml",
  "walkdir",
+]
+
+[[package]]
+name = "apss-v1-0003-fitness-functions"
+version = "0.2.0"
+dependencies = [
+ "apss-core",
+ "chrono",
+ "glob",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "toml",
 ]
 
 [[package]]
