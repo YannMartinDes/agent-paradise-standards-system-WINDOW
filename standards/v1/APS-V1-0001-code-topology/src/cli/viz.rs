@@ -1,9 +1,9 @@
 //! `viz` command: render HTML visualizations from `.topology/` artifacts.
 //!
 //! Per ADR-0002, the visualization bodies are feature-gated. The `3d`
-//! visualization requires the `viz-3d` feature; the dashboard visualizations
+//! visualization requires the `FD01` feature; the dashboard visualizations
 //! (`codecity`, `clusters`, `vsa`, and the `index` page) require the
-//! `viz-dashboard` feature. With a needed feature disabled the command returns
+//! `VZ01` feature. With a needed feature disabled the command returns
 //! exit code 5 with a message naming the missing feature.
 
 use super::health::{
@@ -231,7 +231,7 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
     for vtype in &viz_types {
         let (html_content, output_path): (String, PathBuf) = match *vtype {
             "3d" => {
-                #[cfg(feature = "viz-3d")]
+                #[cfg(feature = "FD01")]
                 {
                     use crate::OutputFormat;
                     use crate::Projector;
@@ -256,16 +256,16 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
                         }
                     }
                 }
-                #[cfg(not(feature = "viz-3d"))]
+                #[cfg(not(feature = "FD01"))]
                 {
                     eprintln!(
-                        "Error: the '3d' visualization requires the 'viz-3d' feature, which is not enabled in this build."
+                        "Error: the '3d' visualization requires the 'FD01' feature, which is not enabled in this build."
                     );
                     return 5;
                 }
             }
             "codecity" => {
-                #[cfg(feature = "viz-dashboard")]
+                #[cfg(feature = "VZ01")]
                 {
                     if verbose {
                         println!("Rendering CodeCity visualization...");
@@ -285,16 +285,16 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
                     };
                     (html, out)
                 }
-                #[cfg(not(feature = "viz-dashboard"))]
+                #[cfg(not(feature = "VZ01"))]
                 {
                     eprintln!(
-                        "Error: the 'codecity' visualization requires the 'viz-dashboard' feature, which is not enabled in this build."
+                        "Error: the 'codecity' visualization requires the 'VZ01' feature, which is not enabled in this build."
                     );
                     return 5;
                 }
             }
             "clusters" => {
-                #[cfg(feature = "viz-dashboard")]
+                #[cfg(feature = "VZ01")]
                 {
                     if verbose {
                         println!("Rendering Package Clusters visualization...");
@@ -314,16 +314,16 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
                     };
                     (html, out)
                 }
-                #[cfg(not(feature = "viz-dashboard"))]
+                #[cfg(not(feature = "VZ01"))]
                 {
                     eprintln!(
-                        "Error: the 'clusters' visualization requires the 'viz-dashboard' feature, which is not enabled in this build."
+                        "Error: the 'clusters' visualization requires the 'VZ01' feature, which is not enabled in this build."
                     );
                     return 5;
                 }
             }
             "vsa" => {
-                #[cfg(feature = "viz-dashboard")]
+                #[cfg(feature = "VZ01")]
                 {
                     if verbose {
                         println!("Rendering VSA diagram...");
@@ -384,10 +384,10 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
 
                     (html, out)
                 }
-                #[cfg(not(feature = "viz-dashboard"))]
+                #[cfg(not(feature = "VZ01"))]
                 {
                     eprintln!(
-                        "Error: the 'vsa' visualization requires the 'viz-dashboard' feature, which is not enabled in this build."
+                        "Error: the 'vsa' visualization requires the 'VZ01' feature, which is not enabled in this build."
                     );
                     return 5;
                 }
@@ -408,7 +408,7 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
 
     // Generate index if --all
     if viz_type == "all" {
-        #[cfg(feature = "viz-dashboard")]
+        #[cfg(feature = "VZ01")]
         {
             if verbose {
                 println!("Generating index...");
@@ -458,10 +458,10 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
             }
             generated_files.push(index_path.display().to_string());
         }
-        #[cfg(not(feature = "viz-dashboard"))]
+        #[cfg(not(feature = "VZ01"))]
         {
             eprintln!(
-                "Error: the dashboard index requires the 'viz-dashboard' feature, which is not enabled in this build."
+                "Error: the dashboard index requires the 'VZ01' feature, which is not enabled in this build."
             );
             return 5;
         }
@@ -503,7 +503,7 @@ pub(super) fn topology_viz(path: &str, viz_type: &str, output: Option<&str>, ver
 }
 
 /// Generate a placeholder HTML page when no vsa.yaml is found.
-#[cfg(feature = "viz-dashboard")]
+#[cfg(feature = "VZ01")]
 fn generate_vsa_placeholder() -> String {
     r#"<!DOCTYPE html>
 <html lang="en">

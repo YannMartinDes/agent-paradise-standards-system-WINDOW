@@ -71,6 +71,10 @@ pub mod error_codes {
 
     /// Crate uses `publish = false` but is expected to be publishable.
     pub const DI_PUBLISH_DISABLED: &str = "DI_PUBLISH_DISABLED";
+
+    /// A standard's substandard codes and its Cargo.toml `[features]` keys
+    /// (excluding `default`) are not in one-to-one correspondence.
+    pub const DI_SUBSTANDARD_FEATURE_MISMATCH: &str = "DI_SUBSTANDARD_FEATURE_MISMATCH";
 }
 
 // ============================================================================
@@ -411,6 +415,164 @@ pub fn validate_release_readiness(crate_path: &Path) -> Diagnostics {
                 .with_hint("Remove 'publish = false' if this crate should be distributed"),
             );
         }
+    }
+
+    diags
+}
+
+/// Validate that a standard crate's `[features]` keys are exactly its
+/// (merged) substandard codes.
+///
+/// This is the poka-yoke for the ADR-0002 / DI01 invariant: the cargo feature
+/// name equals the substandard profile code (the id suffix after the last `.`).
+/// Because codegen passes selected codes through verbatim as feature names, a
+/// feature that is missing (or named differently) would silently drop a
+/// substandard from composed builds. This check makes that impossible: it emits
+/// an Error for each substandard code with no matching `[features]` entry, and
+/// an Error for each non-`default` feature with no matching substandard.
+///
+/// Parity only applies to the feature-module distribution pattern: substandards
+/// that ship inside the parent crate as feature-gated modules. Per ADR-0002,
+/// those are exactly the substandards with no `Cargo.toml` of their own.
+/// Substandards that publish as their own crates (each with a `Cargo.toml`) are
+/// not feature-gated, so they are ignored here. A standard with no merged
+/// substandards is a no-op.
+///
+/// The substandard codes are read from `substandards/*/substandard.toml` ids;
+/// the feature keys are read from the standard crate's own `Cargo.toml`.
+pub fn validate_substandard_feature_parity(crate_path: &Path) -> Diagnostics {
+    use std::collections::BTreeSet;
+
+    let mut diags = Diagnostics::new();
+
+    let substandards_dir = crate_path.join("substandards");
+    if !substandards_dir.is_dir() {
+        // Standards without substandards have nothing to keep in parity.
+        return diags;
+    }
+
+    // The feature-module distribution pattern is identified by the parent crate
+    // declaring a `[features]` table. A standard with no `[features]` block is
+    // not shipping substandards as feature modules (it uses the separate-crate
+    // pattern, or has no substandards at all), so parity does not apply.
+    let cargo_path = crate_path.join("Cargo.toml");
+    let cargo_content = match std::fs::read_to_string(&cargo_path) {
+        Ok(c) => c,
+        Err(e) => {
+            diags.push(
+                Diagnostic::error(
+                    error_codes::DI_MISSING_CARGO_TOML,
+                    format!("Failed to read Cargo.toml: {e}"),
+                )
+                .with_path(&cargo_path),
+            );
+            return diags;
+        }
+    };
+    let cargo_toml: toml::Value = match cargo_content.parse() {
+        Ok(v) => v,
+        Err(e) => {
+            diags.push(
+                Diagnostic::error(
+                    error_codes::DI_CARGO_TOML_PARSE_ERROR,
+                    format!("Failed to parse Cargo.toml: {e}"),
+                )
+                .with_path(&cargo_path),
+            );
+            return diags;
+        }
+    };
+
+    // Collect merged-substandard codes (the id suffix after the last '.').
+    // Only feature-module substandards count: those without their own
+    // Cargo.toml. Their PRESENCE, not the existence of a `[features]` table, is
+    // what makes parity mandatory: a merged substandard with no `[features]`
+    // table at all is the exact silent-mistake this check exists to catch.
+    let mut codes: BTreeSet<String> = BTreeSet::new();
+    let entries = match std::fs::read_dir(&substandards_dir) {
+        Ok(entries) => entries,
+        Err(e) => {
+            diags.push(
+                Diagnostic::error(
+                    error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH,
+                    format!("Failed to read substandards directory: {e}"),
+                )
+                .with_path(&substandards_dir),
+            );
+            return diags;
+        }
+    };
+    let mut has_separate_crate_substandard = false;
+    for entry in entries.flatten() {
+        let sub_dir = entry.path();
+        let toml_path = sub_dir.join("substandard.toml");
+        if !toml_path.is_file() {
+            continue;
+        }
+        // Separate-crate substandards (own Cargo.toml) are not feature-gated.
+        if sub_dir.join("Cargo.toml").is_file() {
+            has_separate_crate_substandard = true;
+            continue;
+        }
+        // Only genuine, parseable merged substandards participate in feature
+        // parity. Metadata well-formedness is the structure validator's job;
+        // an unparseable substandard.toml is skipped here so this check stays
+        // focused on the feature-module invariant and does not double-report.
+        if let Ok(meta) = crate::metadata::parse_substandard_metadata(&toml_path) {
+            if let Some(code) = meta.substandard.id.rsplit('.').next() {
+                codes.insert(code.to_string());
+            }
+        }
+    }
+
+    // No merged (feature-module) substandards: this is the separate-crate
+    // pattern or has no substandards, so feature parity does not apply and a
+    // `[features]` table (if any) is unrelated to substandards. No-op.
+    if codes.is_empty() {
+        let _ = has_separate_crate_substandard;
+        return diags;
+    }
+
+    // There ARE merged substandards, so a matching `[features]` table is
+    // required. A missing table is treated as an empty feature set, so every
+    // code is reported as having no matching feature.
+    let mut features: BTreeSet<String> = BTreeSet::new();
+    if let Some(features_table) = cargo_toml.get("features").and_then(|f| f.as_table()) {
+        for key in features_table.keys() {
+            if key != "default" {
+                features.insert(key.clone());
+            }
+        }
+    }
+
+    // A substandard code with no matching [features] entry.
+    for code in codes.difference(&features) {
+        diags.push(
+            Diagnostic::error(
+                error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH,
+                format!(
+                    "Substandard code '{code}' has no matching '[features]' entry in Cargo.toml"
+                ),
+            )
+            .with_path(&cargo_path)
+            .with_hint(format!(
+                "Add a '{code} = [...]' feature so the cargo feature name equals the substandard code"
+            )),
+        );
+    }
+
+    // A non-default feature with no matching substandard.
+    for feature in features.difference(&codes) {
+        diags.push(
+            Diagnostic::error(
+                error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH,
+                format!("Cargo.toml feature '{feature}' has no matching substandard"),
+            )
+            .with_path(&cargo_path)
+            .with_hint(format!(
+                "Remove the '{feature}' feature or add a substandard whose code is '{feature}'"
+            )),
+        );
     }
 
     diags
@@ -836,6 +998,165 @@ categories = ["development-tools"]
                 .any(|d| d.code == error_codes::DI_MISSING_DISCOVERY_METADATA),
             "no discovery-metadata warnings expected when all fields present: {diags}"
         );
+    }
+
+    /// Build a standard crate dir with the given Cargo.toml [features] block and
+    /// substandard codes (one substandard.toml per code).
+    fn make_parity_fixture(features_block: &str, codes: &[&str]) -> tempfile::TempDir {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            format!(
+                "[package]\nname = \"apss-v1-0001-code-topology\"\nversion = \"1.0.0\"\n\n{features_block}\n"
+            ),
+        )
+        .unwrap();
+        let subs = temp.path().join("substandards");
+        for code in codes {
+            let dir = subs.join(code);
+            std::fs::create_dir_all(&dir).unwrap();
+            std::fs::write(
+                dir.join("substandard.toml"),
+                format!(
+                    r#"schema = "aps.substandard/v1"
+
+[substandard]
+id = "APS-V1-0001.{code}"
+name = "{code} Profile"
+slug = "{code}"
+version = "0.1.0"
+parent_id = "APS-V1-0001"
+parent_major = "0"
+
+[ownership]
+maintainers = ["AgentParadise"]
+"#
+                ),
+            )
+            .unwrap();
+        }
+        temp
+    }
+
+    #[test]
+    fn test_feature_parity_passes_when_equal() {
+        let temp = make_parity_fixture(
+            "[features]\ndefault = [\"RS01\", \"FD01\"]\nRS01 = []\nFD01 = []",
+            &["RS01", "FD01"],
+        );
+        let diags = validate_substandard_feature_parity(temp.path());
+        assert!(!diags.has_errors(), "expected parity to pass: {diags}");
+    }
+
+    #[test]
+    fn test_feature_parity_missing_feature_fails() {
+        // Substandard FD01 has no matching [features] entry.
+        let temp = make_parity_fixture(
+            "[features]\ndefault = [\"RS01\"]\nRS01 = []",
+            &["RS01", "FD01"],
+        );
+        let diags = validate_substandard_feature_parity(temp.path());
+        let diag = diags
+            .iter()
+            .find(|d| d.code == error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH)
+            .expect("expected DI_SUBSTANDARD_FEATURE_MISMATCH");
+        assert_eq!(diag.severity, crate::Severity::Error);
+        assert!(
+            diag.message.contains("FD01"),
+            "diagnostic should name the missing code: {}",
+            diag.message
+        );
+    }
+
+    #[test]
+    fn test_feature_parity_orphan_feature_fails() {
+        // Feature ZZ99 has no matching substandard.
+        let temp = make_parity_fixture(
+            "[features]\ndefault = [\"RS01\", \"ZZ99\"]\nRS01 = []\nZZ99 = []",
+            &["RS01"],
+        );
+        let diags = validate_substandard_feature_parity(temp.path());
+        let diag = diags
+            .iter()
+            .find(|d| d.code == error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH)
+            .expect("expected DI_SUBSTANDARD_FEATURE_MISMATCH");
+        assert_eq!(diag.severity, crate::Severity::Error);
+        assert!(
+            diag.message.contains("ZZ99"),
+            "diagnostic should name the orphan feature: {}",
+            diag.message
+        );
+    }
+
+    #[test]
+    fn test_feature_parity_skips_separate_crate_substandards() {
+        // Separate-crate substandards (each with its own Cargo.toml) are not
+        // feature-gated, so parity is a no-op for them regardless of whether the
+        // parent has a [features] block.
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname = \"apss-v1-0009-legacy\"\nversion = \"1.0.0\"\n",
+        )
+        .unwrap();
+        let sub = temp.path().join("substandards/OLD01-thing");
+        std::fs::create_dir_all(&sub).unwrap();
+        // Has its own Cargo.toml: the separate-crate pattern, not feature-module.
+        std::fs::write(
+            sub.join("Cargo.toml"),
+            "[package]\nname = \"apss-old01-thing\"\nversion = \"1.0.0\"\n",
+        )
+        .unwrap();
+        std::fs::write(
+            sub.join("substandard.toml"),
+            "schema = \"aps.substandard/v1\"\n\n[substandard]\nid = \"APS-V1-0009.OL01\"\n",
+        )
+        .unwrap();
+        let diags = validate_substandard_feature_parity(temp.path());
+        assert!(
+            diags.is_empty(),
+            "separate-crate substandards should make parity a no-op: {diags}"
+        );
+    }
+
+    #[test]
+    fn test_feature_parity_merged_substandard_without_features_table_fails() {
+        // The airtight case: a merged substandard (no Cargo.toml) exists but the
+        // parent has no [features] table at all. This must fail, not silently
+        // pass, because the substandard module would never be enabled.
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname = \"apss-v1-0042-thing\"\nversion = \"1.0.0\"\n",
+        )
+        .unwrap();
+        let sub = temp.path().join("substandards/XX01-widget");
+        std::fs::create_dir_all(&sub).unwrap();
+        std::fs::write(
+            sub.join("substandard.toml"),
+            "schema = \"aps.substandard/v1\"\n\n[substandard]\nid = \"APS-V1-0042.XX01\"\nname = \"Widget\"\nslug = \"widget\"\nversion = \"0.1.0\"\nparent_id = \"APS-V1-0042\"\nparent_major = \"0\"\n\n[ownership]\nmaintainers = [\"test\"]\n",
+        )
+        .unwrap();
+        let diags = validate_substandard_feature_parity(temp.path());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.code == error_codes::DI_SUBSTANDARD_FEATURE_MISMATCH
+                    && d.message.contains("XX01")),
+            "a merged substandard with no [features] table must fail: {diags}"
+        );
+    }
+
+    #[test]
+    fn test_feature_parity_skips_without_substandards_dir() {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname = \"apss-v1-0003-fitness\"\nversion = \"1.0.0\"\n",
+        )
+        .unwrap();
+        let diags = validate_substandard_feature_parity(temp.path());
+        assert!(diags.is_empty(), "no substandards dir should be a no-op");
     }
 
     #[test]

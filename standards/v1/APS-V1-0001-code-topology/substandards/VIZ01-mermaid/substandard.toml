@@ -7,7 +7,6 @@ slug = "mermaid"
 version = "0.1.0"
 parent_id = "APS-V1-0001"
 parent_major = "0"
-feature = "viz-mermaid"
 
 [projector]
 type = "mermaid"

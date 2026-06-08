@@ -540,7 +540,7 @@ fn is_valid_standard_id(id: &str) -> bool {
 }
 
 /// Check if a string matches the `[A-Z]{2}\d{2}` substandard code pattern.
-fn is_valid_substandard_code(code: &str) -> bool {
+pub(crate) fn is_valid_substandard_code(code: &str) -> bool {
     if code.len() != 4 {
         return false;
     }

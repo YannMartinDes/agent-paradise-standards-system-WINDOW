@@ -77,14 +77,6 @@ pub struct SubstandardFields {
     pub parent_id: String,
     /// Parent major version alignment.
     pub parent_major: String,
-    /// Cargo feature of the parent standard crate that ships this substandard.
-    ///
-    /// This is the governed source of truth for the substandard-to-cargo-feature
-    /// mapping consumed by build-crate codegen (see DI01 and ADR-0002). When a
-    /// code-topology substandard maps to an optional feature module, this field
-    /// names that feature (for example `"lang-rust"`).
-    #[serde(default)]
-    pub feature: Option<String>,
     /// Whether this release maintains backward compatibility with the previous version.
     /// Set to `false` when introducing breaking changes (requires MAJOR version bump).
     #[serde(default = "default_backwards_compat")]
