@@ -23,7 +23,7 @@ binary that contains only the standards your project declares.
 
 ```bash
 cargo install apss              # install the bootstrap CLI
-apss add code-topology          # declare the standard in APSS.yaml
+apss init --standard code-topology   # declare the standard in APSS.yaml (set id to APS-V1-0001)
 apss install                    # resolve, pin, and build the composed binary
 apss run code-topology analyze .            # analyze the codebase into .topology/
 apss run code-topology viz .topology --type all   # render the visualizations

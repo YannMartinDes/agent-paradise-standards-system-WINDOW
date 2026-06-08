@@ -59,8 +59,8 @@ APSS uses crates.io as its distribution transport (see [ADR-0002](standards/v1/A
 cargo install apss
 
 # In your repo
-apss init        # generates APSS.yaml, the user-owned project manifest
-apss add code-topology   # add a standard to APSS.yaml
+apss init --standard code-topology   # generates APSS.yaml declaring the standard
+                                     # (replace the scaffolded id placeholder with APS-V1-0001)
 apss install     # resolves standards from crates.io, writes apss.lock, builds the composed binary, installs git hooks
 apss validate    # validate the project (also runs from the pre-commit hook)
 apss status      # show project configuration and status
