@@ -7,6 +7,7 @@ slug = "force-directed"
 version = "0.1.0"
 parent_id = "APS-V1-0001"
 parent_major = "0"
+feature = "viz-3d"
 
 [projector]
 type = "3d"

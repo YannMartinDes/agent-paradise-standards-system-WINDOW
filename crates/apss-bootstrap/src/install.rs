@@ -2,7 +2,7 @@
 
 use apss_core::config::{self, CONFIG_FILENAME};
 use apss_core::distribution::codegen::{self, CodegenOptions};
-use apss_core::lockfile::{self, LOCKFILE_FILENAME, LockedPackage, LockedSubstandard, Lockfile};
+use apss_core::lockfile::{self, LOCKFILE_FILENAME, LockedPackage, Lockfile};
 use apss_core::resolution;
 use clap::Args;
 use serde::Deserialize;
@@ -92,7 +92,12 @@ pub fn run(args: InstallArgs) -> i32 {
 
     // 3. Generate/update lockfile
     let lockfile_path = project_root.join(LOCKFILE_FILENAME);
-    let lockfile = generate_lockfile(&resolved, bundle_manifest.as_ref());
+    let existing_lockfile = lockfile::parse_lockfile(&lockfile_path).ok();
+    let mut lockfile = generate_lockfile(
+        &resolved,
+        bundle_manifest.as_ref(),
+        existing_lockfile.as_ref(),
+    );
 
     let local_source = args.local_repo.clone().or(args.bundle_dir.clone());
 
@@ -102,11 +107,14 @@ pub fn run(args: InstallArgs) -> i32 {
         return 1;
     }
 
+    // Registry installs (no --bundle-dir/--local-repo) are now supported: cargo
+    // resolves the version requirement during the build below and we read the
+    // exact pin + checksum back into apss.lock (ADR-0002). At this point the
+    // lockfile carries the version REQUIREMENT, not a hand-resolved pin, so the
+    // only "unresolved" state we still refuse is the legacy UNRESOLVED markers
+    // (which generate_lockfile no longer produces for registry packages).
     if local_source.is_none() && lockfile_has_unresolved_packages(&lockfile) {
-        eprintln!("Registry resolution is not implemented yet.");
-        eprintln!(
-            "Refusing to write an unresolved {LOCKFILE_FILENAME}; use --bundle-dir or --local-repo for local distribution testing."
-        );
+        eprintln!("Refusing to write an unresolved {LOCKFILE_FILENAME}.");
         return 1;
     }
 
@@ -186,6 +194,24 @@ pub fn run(args: InstallArgs) -> i32 {
     match cargo_cmd.status() {
         Ok(status) if status.success() => {
             println!("Build succeeded.");
+
+            // ADR-0002 read-back: cargo has now resolved the registry version
+            // requirements and written `.apss/build/Cargo.lock`. Pull the exact
+            // versions and checksums back into apss.lock.
+            if apply_resolved_pins(&mut lockfile, &build_dir) {
+                if args.locked {
+                    eprintln!(
+                        "Cargo resolved a different version than {LOCKFILE_FILENAME} pins, but --locked was specified."
+                    );
+                    eprintln!("Run 'apss install' without --locked to update.");
+                    return 1;
+                }
+                if let Err(e) = lockfile::write_lockfile(&lockfile_path, &lockfile) {
+                    eprintln!("Failed to update lockfile with resolved versions: {e}");
+                    return 1;
+                }
+                println!("Pinned resolved versions in {LOCKFILE_FILENAME}");
+            }
         }
         Ok(status) => {
             eprintln!(
@@ -268,9 +294,13 @@ fn should_install_pre_commit_hook(no_hooks: bool, config_pre_commit: bool) -> bo
     !no_hooks && config_pre_commit
 }
 
+/// Source string used for registry-resolved packages.
+const REGISTRY_SOURCE: &str = "registry+https://crates.io";
+
 fn generate_lockfile(
     config: &resolution::ResolvedProjectConfig,
     bundle_manifest: Option<&BundleManifest>,
+    existing: Option<&Lockfile>,
 ) -> Lockfile {
     let mut lockfile = Lockfile::new(lockfile::APSS_CORE_VERSION.to_string());
 
@@ -292,24 +322,79 @@ fn generate_lockfile(
             continue;
         }
 
-        // TODO: resolve exact version and checksum from registry metadata.
+        // ADR-0002 makes cargo the registry resolver. We seed each registry
+        // package with the version REQUIREMENT (so codegen emits
+        // `version = "<req>"` into the build Cargo.toml). `cargo build` then
+        // resolves the exact version and writes `.apss/build/Cargo.lock`, which
+        // we read back into this lockfile via `apply_resolved_pins`. We never
+        // hand-roll a crates.io index client.
+        //
+        // If a prior apss.lock already pinned an exact version that still
+        // satisfies the requirement, reuse it so `--locked` stays stable and we
+        // do not silently float the pin on every install.
+        let (version, checksum) = existing
+            .and_then(|l| l.find_package(&standard.id))
+            .filter(|prev| prev.source.starts_with("registry+"))
+            .filter(|prev| pin_satisfies_req(&prev.version, &standard.version_req))
+            .map(|prev| (prev.version.clone(), prev.checksum.clone()))
+            .unwrap_or_else(|| (standard.version_req.clone(), String::new()));
+
         lockfile.packages.push(LockedPackage {
             id: standard.id.clone(),
             slug: slug.clone(),
             crate_name: standard.crate_name.clone(),
-            version: format!("UNRESOLVED({})", standard.version_req),
-            checksum: "UNRESOLVED".to_string(),
-            source: format!("unresolved+registry+{}", config.tool.registry),
-            substandards: vec![LockedSubstandard {
-                profile: "UNRESOLVED".to_string(),
-                crate_name: "UNRESOLVED".to_string(),
-                version: "UNRESOLVED".to_string(),
-                checksum: "UNRESOLVED".to_string(),
-            }],
+            version,
+            checksum,
+            source: REGISTRY_SOURCE.to_string(),
+            substandards: Vec::new(),
         });
     }
 
     lockfile
+}
+
+/// True when `version` is an exact semver that satisfies `req`.
+fn pin_satisfies_req(version: &str, req: &str) -> bool {
+    match (
+        semver::Version::parse(version),
+        semver::VersionReq::parse(req),
+    ) {
+        (Ok(v), Ok(r)) => r.matches(&v),
+        _ => false,
+    }
+}
+
+/// Read cargo's resolved exact versions and checksums from the build crate's
+/// `Cargo.lock` back into the registry packages of `lockfile`.
+///
+/// See ADR-0002: cargo is the resolver; this is the read-back step.
+fn apply_resolved_pins(lockfile: &mut Lockfile, build_dir: &Path) -> bool {
+    let cargo_lock_path = build_dir.join("Cargo.lock");
+    let Ok(content) = std::fs::read_to_string(&cargo_lock_path) else {
+        return false;
+    };
+
+    let mut changed = false;
+    for package in &mut lockfile.packages {
+        if !package.source.starts_with("registry+") {
+            continue;
+        }
+        if let Some(resolved) = lockfile::read_cargo_locked_package(&content, &package.crate_name) {
+            if package.version != resolved.version {
+                package.version = resolved.version;
+                changed = true;
+            }
+            let checksum = resolved
+                .checksum
+                .map(|c| format!("sha256:{c}"))
+                .unwrap_or_default();
+            if package.checksum != checksum {
+                package.checksum = checksum;
+                changed = true;
+            }
+        }
+    }
+    changed
 }
 
 #[derive(Debug, Deserialize)]
@@ -551,5 +636,120 @@ mod tests {
         });
 
         assert!(lockfile_has_unresolved_packages(&lockfile));
+    }
+
+    fn registry_config() -> resolution::ResolvedProjectConfig {
+        use apss_core::config::{ProjectInfo, ToolConfig};
+        use apss_core::resolution::ResolvedStandard;
+        use std::collections::BTreeMap;
+
+        resolution::ResolvedProjectConfig {
+            project: ProjectInfo {
+                name: "consumer".to_string(),
+                apss_version: "v1".to_string(),
+            },
+            standards: BTreeMap::from([(
+                "code-topology".to_string(),
+                ResolvedStandard {
+                    id: "APS-V1-0001".to_string(),
+                    slug: "code-topology".to_string(),
+                    version_req: "0.2".to_string(),
+                    enabled: true,
+                    substandards: None,
+                    config: toml::Value::Table(Default::default()),
+                    crate_name: "apss-v1-0001-code-topology".to_string(),
+                },
+            )]),
+            tool: ToolConfig::default(),
+            source_files: vec![],
+        }
+    }
+
+    #[test]
+    fn registry_lockfile_seeds_requirement_not_unresolved() {
+        let lockfile = generate_lockfile(&registry_config(), None, None);
+        let pkg = lockfile.find_package("APS-V1-0001").unwrap();
+
+        assert_eq!(pkg.version, "0.2");
+        assert_eq!(pkg.checksum, "");
+        assert_eq!(pkg.source, REGISTRY_SOURCE);
+        assert!(!lockfile_has_unresolved_packages(&lockfile));
+    }
+
+    #[test]
+    fn registry_lockfile_reuses_satisfying_existing_pin() {
+        let mut existing = Lockfile::new("1.0.0".to_string());
+        existing.packages.push(LockedPackage {
+            id: "APS-V1-0001".to_string(),
+            slug: "code-topology".to_string(),
+            crate_name: "apss-v1-0001-code-topology".to_string(),
+            version: "0.2.4".to_string(),
+            checksum: "sha256:abc".to_string(),
+            source: REGISTRY_SOURCE.to_string(),
+            substandards: vec![],
+        });
+
+        let lockfile = generate_lockfile(&registry_config(), None, Some(&existing));
+        let pkg = lockfile.find_package("APS-V1-0001").unwrap();
+
+        // 0.2.4 satisfies the "0.2" requirement, so the existing pin is reused.
+        assert_eq!(pkg.version, "0.2.4");
+        assert_eq!(pkg.checksum, "sha256:abc");
+    }
+
+    #[test]
+    fn registry_lockfile_drops_existing_pin_that_violates_req() {
+        let mut existing = Lockfile::new("1.0.0".to_string());
+        existing.packages.push(LockedPackage {
+            id: "APS-V1-0001".to_string(),
+            slug: "code-topology".to_string(),
+            crate_name: "apss-v1-0001-code-topology".to_string(),
+            version: "1.5.0".to_string(),
+            checksum: "sha256:old".to_string(),
+            source: REGISTRY_SOURCE.to_string(),
+            substandards: vec![],
+        });
+
+        let lockfile = generate_lockfile(&registry_config(), None, Some(&existing));
+        let pkg = lockfile.find_package("APS-V1-0001").unwrap();
+
+        // 1.5.0 does not satisfy "0.2", so we fall back to the requirement.
+        assert_eq!(pkg.version, "0.2");
+        assert_eq!(pkg.checksum, "");
+    }
+
+    #[test]
+    fn apply_resolved_pins_reads_cargo_lock() {
+        let temp = tempfile::tempdir().unwrap();
+        let build_dir = temp.path();
+        std::fs::write(
+            build_dir.join("Cargo.lock"),
+            r#"
+version = 3
+
+[[package]]
+name = "apss-v1-0001-code-topology"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "deadbeef"
+"#,
+        )
+        .unwrap();
+
+        let mut lockfile = generate_lockfile(&registry_config(), None, None);
+        let changed = apply_resolved_pins(&mut lockfile, build_dir);
+
+        assert!(changed);
+        let pkg = lockfile.find_package("APS-V1-0001").unwrap();
+        assert_eq!(pkg.version, "0.2.7");
+        assert_eq!(pkg.checksum, "sha256:deadbeef");
+        assert_eq!(pkg.source, REGISTRY_SOURCE);
+    }
+
+    #[test]
+    fn pin_satisfies_req_basics() {
+        assert!(pin_satisfies_req("0.2.4", "0.2"));
+        assert!(!pin_satisfies_req("1.5.0", "0.2"));
+        assert!(!pin_satisfies_req("not-a-version", "0.2"));
     }
 }

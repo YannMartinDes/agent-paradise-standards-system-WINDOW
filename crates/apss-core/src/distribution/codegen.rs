@@ -135,10 +135,30 @@ fn generate_cargo_toml(
                     standard: standard.id.clone(),
                 })?;
             let ident = standard_crate_ident(&standard.crate_name);
-            content.push_str(&format!(
-                "{ident} = {{ package = \"{}\", version = \"{version}\" }}\n",
-                standard.crate_name
-            ));
+            // Substandard selection (APSS.yaml `substandards`) maps to cargo
+            // features of the parent standard crate (ADR-0002 / DI01: substandards
+            // ship as feature modules, not separate crates). None means "all
+            // substandards", which is cargo's default feature set, so we emit no
+            // override. Some(list) restricts the build to the mapped features.
+            match feature_selection(standard) {
+                Some(features) => {
+                    let rendered = features
+                        .iter()
+                        .map(|feature| format!("\"{feature}\""))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    content.push_str(&format!(
+                        "{ident} = {{ package = \"{}\", version = \"{version}\", default-features = false, features = [{rendered}] }}\n",
+                        standard.crate_name
+                    ));
+                }
+                None => {
+                    content.push_str(&format!(
+                        "{ident} = {{ package = \"{}\", version = \"{version}\" }}\n",
+                        standard.crate_name
+                    ));
+                }
+            }
         }
     }
 
@@ -215,6 +235,54 @@ fn package_name_from_manifest(content: &str) -> Option<String> {
 
 fn standard_crate_ident(crate_name: &str) -> String {
     crate_name.replace('-', "_")
+}
+
+/// Resolve the cargo features a standard's build crate should enable from its
+/// selected substandards.
+///
+/// `None` means no `features`/`default-features` override is emitted, so cargo
+/// uses the crate's default feature set (all substandards). `Some(list)` maps
+/// each selected substandard profile code to its cargo feature name; the caller
+/// then emits `default-features = false, features = [...]`.
+///
+/// The governed source of truth for each mapping is the `feature` field in the
+/// substandard's `substandard.toml`. The lookup table below mirrors those
+/// declarations for the publishable code-topology crate; `codegen_feature_map`
+/// has a sync test that fails if a substandard.toml `feature` value drifts from
+/// this table. See DI01 and ADR-0002.
+fn feature_selection(standard: &crate::resolution::ResolvedStandard) -> Option<Vec<String>> {
+    let selected = standard.substandards.as_ref()?;
+    let map = codegen_feature_map(&standard.id);
+    let mut features = Vec::new();
+    for profile in selected {
+        if let Some(feature) = map.get(profile.as_str()) {
+            features.push((*feature).to_string());
+        }
+    }
+    Some(features)
+}
+
+/// Profile-code to cargo-feature lookup for a given standard ID.
+///
+/// Keyed by the profile codes a consumer writes in `APSS.yaml` `substandards`.
+/// Both the short profile prefix (for example `LANG01`) and the full
+/// substandard directory name (for example `VIZ01-dashboard`, needed because
+/// `VIZ01` is ambiguous) are accepted.
+fn codegen_feature_map(
+    standard_id: &str,
+) -> std::collections::BTreeMap<&'static str, &'static str> {
+    let mut map = std::collections::BTreeMap::new();
+    if standard_id == "APS-V1-0001" {
+        map.insert("LANG01", "lang-rust");
+        map.insert("LANG01-rust", "lang-rust");
+        map.insert("VIZ01-dashboard", "viz-dashboard");
+        map.insert("VIZ01-mermaid", "viz-mermaid");
+        map.insert("3D01", "viz-3d");
+        map.insert("3D01-force-directed", "viz-3d");
+        map.insert("CI01", "ci-github-actions");
+        map.insert("CI01-github-actions", "ci-github-actions");
+    }
+    map
 }
 
 fn should_skip_dir(path: &Path) -> bool {
@@ -404,6 +472,76 @@ mod tests {
             err,
             CodegenError::UnresolvedRegistryPackage { .. }
         ));
+    }
+
+    #[test]
+    fn test_substandard_selection_emits_features() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut config = test_config();
+        // Drop the second standard so the assertion targets code-topology.
+        config.standards.remove("fitness");
+        config
+            .standards
+            .get_mut("code-topology")
+            .unwrap()
+            .substandards = Some(vec!["LANG01".to_string(), "3D01".to_string()]);
+
+        generate_build_crate(&config, Some(&test_lockfile()), temp.path()).unwrap();
+
+        let cargo = std::fs::read_to_string(temp.path().join("Cargo.toml")).unwrap();
+        assert!(cargo.contains(
+            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"1.0.0\", default-features = false, features = [\"lang-rust\", \"viz-3d\"] }"
+        ));
+    }
+
+    #[test]
+    fn test_no_substandard_selection_emits_no_features_override() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut config = test_config();
+        config.standards.remove("fitness");
+        // substandards is None by default in test_config().
+
+        generate_build_crate(&config, Some(&test_lockfile()), temp.path()).unwrap();
+
+        let cargo = std::fs::read_to_string(temp.path().join("Cargo.toml")).unwrap();
+        assert!(cargo.contains(
+            "apss_v1_0001_code_topology = { package = \"apss-v1-0001-code-topology\", version = \"1.0.0\" }"
+        ));
+        assert!(!cargo.contains("default-features = false"));
+        assert!(!cargo.contains("features = ["));
+    }
+
+    #[test]
+    fn test_codegen_feature_map_matches_substandard_toml() {
+        // The substandard.toml `feature` field is the governed source of truth.
+        // This freshness test fails if codegen's embedded map drifts from the
+        // checked-in code-topology substandard metadata.
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let substandards_dir = Path::new(manifest_dir)
+            .parent()
+            .and_then(|p| p.parent())
+            .unwrap()
+            .join("standards/v1/APS-V1-0001-code-topology/substandards");
+
+        let map = codegen_feature_map("APS-V1-0001");
+        for entry in std::fs::read_dir(&substandards_dir).unwrap() {
+            let dir = entry.unwrap().path();
+            let toml_path = dir.join("substandard.toml");
+            if !toml_path.is_file() {
+                continue;
+            }
+            let meta = crate::metadata::parse_substandard_metadata(&toml_path).unwrap();
+            let feature = meta
+                .substandard
+                .feature
+                .expect("code-topology substandard.toml must declare a `feature`");
+            let dir_name = dir.file_name().unwrap().to_str().unwrap();
+            assert_eq!(
+                map.get(dir_name).copied(),
+                Some(feature.as_str()),
+                "codegen map for '{dir_name}' must match substandard.toml feature '{feature}'"
+            );
+        }
     }
 
     #[test]
