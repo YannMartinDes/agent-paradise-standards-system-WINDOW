@@ -16,8 +16,7 @@ cargo install apss
 ## Usage
 
 ```bash
-apss init        # generate APSS.yaml, the user-owned project manifest
-apss add <standard>   # add a standard to APSS.yaml
+apss init --standard <slug>   # generate APSS.yaml declaring the standard
 apss install     # resolve standards from crates.io, write apss.lock, install git hooks
 apss validate    # validate the project (also runs from the pre-commit hook)
 apss status      # show project configuration and status

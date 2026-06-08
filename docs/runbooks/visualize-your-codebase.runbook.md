@@ -26,13 +26,30 @@ Expected: `apss 1.0.0` (or newer) on PATH.
 From the target repository root:
 
 ```bash
-apss init
-apss add code-topology
+apss init --standard code-topology
 ```
 
 Expected:
 
 - `APSS.yaml` created (user-owned, edit freely) with a `code-topology` standard entry.
+
+The generated entry scaffolds the id as a placeholder:
+
+```yaml
+standards:
+  code-topology:
+    id: APS-V1-XXXX  # FIXME: replace with the real ID
+    version: ">=0.1.0"
+```
+
+Replace the placeholder id with the Code Topology standard's real ID, `APS-V1-0001`:
+
+```yaml
+standards:
+  code-topology:
+    id: APS-V1-0001
+    version: ">=0.1.0"
+```
 
 ## 3. Install the Standard
 
@@ -152,7 +169,7 @@ Expected: `Created APSS bundle: /tmp/apss-bundles/APS-V1-0001-code-topology-<ver
 
 ### A.2 Install From the Bundle
 
-From the target repository root, after `apss init` and `apss add code-topology` (step 2), install with `--bundle-dir` instead of the plain `apss install`:
+From the target repository root, after `apss init --standard code-topology` (step 2), install with `--bundle-dir` instead of the plain `apss install`:
 
 ```bash
 apss install --bundle-dir /tmp/apss-bundles/APS-V1-0001-code-topology-<version>.apss
