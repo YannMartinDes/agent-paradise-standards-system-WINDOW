@@ -10,8 +10,7 @@ This runbook is written to be handed to a coding agent (for example Claude Code)
 
 - A target repository containing Rust (`.rs`) or Python (`.py`/`.pyi`) source files. Other languages are not yet supported by the analyzer.
 - Rust toolchain and Cargo installed (`cargo --version` succeeds).
-- Network access to crates.io for step 1.
-- Until standard crates are published to crates.io (ADR-0002 Phase D), a local checkout of the APSS repository is required ONCE, for step 2 only: `git clone https://github.com/AgentParadise/agent-paradise-standards-system`. Set `APSS_REPO` to its path. Everything after step 2 uses the installed binaries with no checkout involvement.
+- Network access to crates.io. The standard is resolved and built from crates.io; no APSS repository checkout is required. If you are offline or air-gapped, see the appendix at the end.
 
 ## 1. Install the APSS CLI
 
@@ -22,30 +21,30 @@ apss --version
 
 Expected: `apss 1.0.0` (or newer) on PATH.
 
-## 2. Build the Topology Bundle
-
-From the APSS repository checkout:
-
-```bash
-cd "$APSS_REPO"
-mkdir -p /tmp/apss-bundles
-cargo run -p aps-cli --bin apss-dev -- v1 bundle APS-V1-0001 --output /tmp/apss-bundles
-```
-
-Expected: `Created APSS bundle: /tmp/apss-bundles/APS-V1-0001-code-topology-<version>.apss`. The bundle is a self-contained source workspace: `apss-core`, the standard crate, and all substandard crates. Nothing else is downloaded.
-
-## 3. Initialize and Install in the Target Repository
+## 2. Initialize the Target Repository
 
 From the target repository root:
 
 ```bash
 apss init
-apss install --bundle-dir /tmp/apss-bundles/APS-V1-0001-code-topology-<version>.apss
+apss add code-topology
 ```
 
 Expected:
 
-- `APSS.yaml` created (user-owned, edit freely) and `apss.lock` written.
+- `APSS.yaml` created (user-owned, edit freely) with a `code-topology` standard entry.
+
+## 3. Install the Standard
+
+From the target repository root:
+
+```bash
+apss install
+```
+
+Expected:
+
+- The Code Topology standard is resolved from crates.io and pinned in `apss.lock`.
 - A composed binary compiled to `.apss/bin/apss`.
 - `Installed Git hook: .git/hooks/pre-commit` (see step 7).
 
@@ -62,10 +61,10 @@ Expected: `Validation passed.` and a status listing `code-topology  APS-V1-0001 
 
 ## 5. Run the Topology Analysis
 
-From the target repository root, using the project-local composed binary that `apss install` built:
+From the target repository root:
 
 ```bash
-.apss/bin/apss run code-topology analyze .
+apss run code-topology analyze .
 ```
 
 Expected output shape:
@@ -86,13 +85,13 @@ Artifacts produced: `.topology/manifest.toml`, `metrics/modules.json`, `metrics/
 3D coupling graph only:
 
 ```bash
-.apss/bin/apss run code-topology viz .topology --type 3d
+apss run code-topology viz .topology --type 3d
 ```
 
 Full dashboard (recommended):
 
 ```bash
-.apss/bin/apss run code-topology viz .topology --type all
+apss run code-topology viz .topology --type all
 ```
 
 Expected: HTML files under `.topology/viz/` (`index.html`, `topology-3d.html`, `codecity.html`, `clusters.html`, `vsa.html`); the dashboard opens in the default browser. The viz command takes the `.topology` directory path, not the repo root (issue #70 tracks this inconsistency).
@@ -123,13 +122,42 @@ Expected: validation output before the commit completes. Hook failures block the
 |---|---|
 | `No supported source files found` | Target repo has no `.rs`/`.py` files at or below the analyzed path. Point `analyze` at the source root. |
 | `Standard 'topology' not found in APSS.yaml` | The consumer config uses the slug `code-topology`; `topology` is a dev-CLI alias only (issue #70). |
-| `No modules.json found at ./metrics/modules.json` | `viz` was given the repo root. Pass the `.topology` directory. |
-| `No composed CLI commands are registered` | Your `.apss/bin/apss` was built from a pre-0.2.0 bundle. Rebuild the bundle from a current checkout and rerun `apss install --bundle-dir`. |
+| `No modules.json found at ./metrics/modules.json` | `viz` was given the repo root. Pass the `.topology` directory (issue #70). |
+| `apss install` cannot reach crates.io | You are offline or behind a proxy. Use the offline install in the appendix. |
 | `cargo install apss` fails on publish metadata | Update Rust; the workspace requires Rust 1.85+. |
 
 ## Related
 
 - Consumer flow overview: root `README.md`, section "Using APSS in Your Project"
+- Distribution model: ADR-0002 (`standards/v1/APS-V1-0000-meta/docs/adrs/0002-crates-io-distribution.md`) and the [DI01 distribution spec](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/01_spec.md)
 - Distribution lifecycle: `standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/03_package_manager_lifecycle.md`
 - Release acceptance testing: `docs/testing/apss-package-manual-acceptance-testing.runbook.md`
-- Tracking: #67 (runbooks), #70 (CLI UX); #68 closed by ADR-0002 Phase C (consumer binary runs all commands)
+- Tracking: #67 (runbooks), #70 (CLI UX); #68 closed by ADR-0002 Phase C (consumer binary runs all commands). ADR-0002 Phase D enables registry install (`apss install` from crates.io with no checkout).
+
+## Appendix: Offline / Air-Gapped Install
+
+The default flow in steps 1 to 3 resolves the standard from crates.io. When the consumer machine cannot reach crates.io (air-gapped or restricted networks), install from a locally built bundle instead. This path requires a one-time checkout of the APSS repository on a machine that can build it.
+
+### A.1 Build the Topology Bundle
+
+On a machine with the APSS repository checked out (`git clone https://github.com/AgentParadise/agent-paradise-standards-system`, set `APSS_REPO` to its path):
+
+```bash
+cd "$APSS_REPO"
+mkdir -p /tmp/apss-bundles
+cargo run -p aps-cli --bin apss-dev -- v1 bundle APS-V1-0001 --output /tmp/apss-bundles
+```
+
+Expected: `Created APSS bundle: /tmp/apss-bundles/APS-V1-0001-code-topology-<version>.apss`. The bundle is a self-contained source workspace: `apss-core`, the standard crate, and all substandard modules. Nothing else is downloaded. Transfer this bundle directory to the target machine if it differs from the build machine.
+
+### A.2 Install From the Bundle
+
+From the target repository root, after `apss init` and `apss add code-topology` (step 2), install with `--bundle-dir` instead of the plain `apss install`:
+
+```bash
+apss install --bundle-dir /tmp/apss-bundles/APS-V1-0001-code-topology-<version>.apss
+```
+
+Expected: the same outcome as step 3 (composed binary at `.apss/bin/apss`, `apss.lock` written, pre-commit hook installed), but the standard source comes from the local bundle rather than crates.io. Steps 4 onward are identical.
+
+If `.apss/bin/apss` reports `No composed CLI commands are registered`, the bundle was built from a pre-0.2.0 checkout. Rebuild the bundle from a current checkout and rerun `apss install --bundle-dir`.

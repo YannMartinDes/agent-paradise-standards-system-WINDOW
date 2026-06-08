@@ -2,10 +2,10 @@
 
 Bootstrap CLI for the Agent Paradise Standards System (APSS): executable, versioned engineering standards for agentic codebases.
 
-APSS delivers through two channels:
+APSS uses crates.io as its distribution transport:
 
 - **crates.io delivers the tooling**: this `apss` CLI, built on `apss-core`.
-- **APSS bundles deliver the standards**: standards are distributed as versioned bundles, never as crates.io crates.
+- **crates.io delivers the standards**: each official standard publishes as one crate, and its substandards ship as cargo features of that crate. `apss install` resolves standards from crates.io, no APSS checkout required. Bundles remain available as an optional offline install (`apss install --bundle-dir <path>`).
 
 ## Install
 
@@ -17,7 +17,8 @@ cargo install apss
 
 ```bash
 apss init        # generate APSS.yaml, the user-owned project manifest
-apss install     # resolve standards, write apss.lock, install git hooks
+apss add <standard>   # add a standard to APSS.yaml
+apss install     # resolve standards from crates.io, write apss.lock, install git hooks
 apss validate    # validate the project (also runs from the pre-commit hook)
 apss status      # show project configuration and status
 apss run <standard> <command>   # run a standard's command
