@@ -3,20 +3,22 @@
 # =============================================================================
 #
 # Triggered when a PR merges into `release`. Creates git tags and publishes
-# APSS tooling crates to crates.io.
+# APSS crates to crates.io.
 #
 # Flow:
 #   1. Detect which crates had version bumps since last release tag
 #   2. Create git tags (system + per-standard/substandard)
 #   3. Create GitHub Release with changelog from merge commit
-#   4. Publish APSS tooling to crates.io (with approval gate)
+#   4. Publish APSS crates to crates.io (with approval gate)
 #
-# Publish scope (DI01 spec section 9.4): only APSS tooling crates are
-# published to crates.io, and only when the system version changed.
-#   Tier 1: apss-core
-#   Tier 2: apss bootstrap binary
-# Standards, substandards, and experiments are distributed as APSS bundles,
-# never as crates.io crates. They still get git tags and release notes here.
+# Publish scope (DI01 spec section 9.4 as amended by ADR-0002): crates.io is
+# the standard distribution transport. Publish order:
+#   Tier 1: apss-core (always first when the system changed)
+#   Tier 2: changed OFFICIAL standard crates (standards/v1/APS-V1-XXXX-slug,
+#           excluding APS-V1-0000-meta), in dependency order after apss-core
+#   Tier 3: apss bootstrap binary (last, may depend on published standards)
+# Experiments and meta-standard internal substandards (CF01/DI01/CL01/SS01)
+# are NOT published. They still get git tags and release notes here.
 # =============================================================================
 
 name: Release Create
@@ -39,6 +41,7 @@ jobs:
       system_changed: ${{ steps.detect.outputs.system_changed }}
       system_version: ${{ steps.detect.outputs.system_version }}
       changed_crates: ${{ steps.detect.outputs.changed_crates }}
+      standards_changed: ${{ steps.detect.outputs.standards_changed }}
       tag_list: ${{ steps.detect.outputs.tag_list }}
       has_changes: ${{ steps.detect.outputs.has_changes }}
     steps:
@@ -177,9 +180,22 @@ jobs:
             fi
           fi
 
+          # Did any OFFICIAL standard crate change? Official standard crates live
+          # under standards/v1/APS-V1-XXXX-slug with XXXX != 0000. This filter
+          # excludes the meta-standard (APS-V1-0000), its internal substandards
+          # (dir under standards/v1/APS-V1-0000/substandards/), and experiments
+          # (dir under standards-experimental/). These must never be published.
+          STANDARDS_CHANGED="false"
+          if echo "$CHANGED_CRATES" | jq -e \
+            '[.[] | select((.dir | startswith("standards/v1/APS-V1-")) and (.dir | startswith("standards/v1/APS-V1-0000") | not))] | length > 0' \
+            >/dev/null; then
+            STANDARDS_CHANGED="true"
+          fi
+
           echo ""
           echo "=== Summary ==="
           echo "System changed: $SYSTEM_CHANGED"
+          echo "Standards changed: $STANDARDS_CHANGED"
           echo "Tags: $TAG_LIST"
           echo "Changed crates: $(echo "$CHANGED_CRATES" | jq -c '.')"
 
@@ -187,6 +203,7 @@ jobs:
           echo "system_changed=$SYSTEM_CHANGED" >> "$GITHUB_OUTPUT"
           echo "system_version=$SYSTEM_VERSION" >> "$GITHUB_OUTPUT"
           echo "changed_crates=$CHANGED_CRATES" >> "$GITHUB_OUTPUT"
+          echo "standards_changed=$STANDARDS_CHANGED" >> "$GITHUB_OUTPUT"
           echo "tag_list=$TAG_LIST" >> "$GITHUB_OUTPUT"
           echo "has_changes=$HAS_CHANGES" >> "$GITHUB_OUTPUT"
 
@@ -275,7 +292,10 @@ jobs:
   publish:
     name: Publish to crates.io
     needs: [detect-changes, create-release]
-    if: needs.detect-changes.outputs.system_changed == 'true'
+    # Publish when the tooling system changed (apss-core + apss) OR when an
+    # official standard crate changed. A standard can release independently of
+    # the tooling, so standards_changed alone is enough to run this job.
+    if: needs.detect-changes.outputs.system_changed == 'true' || needs.detect-changes.outputs.standards_changed == 'true'
     runs-on: ubuntu-latest
     environment: release-publish
     steps:
@@ -283,38 +303,70 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
-      - name: Publish APSS tooling crates
+      - name: Publish APSS crates
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          SYSTEM_CHANGED: ${{ needs.detect-changes.outputs.system_changed }}
+          SYSTEM_VERSION: ${{ needs.detect-changes.outputs.system_version }}
+          CHANGED_CRATES: ${{ needs.detect-changes.outputs.changed_crates }}
         run: |
           set -euo pipefail
 
-          VERSION="${{ needs.detect-changes.outputs.system_version }}"
-
-          # DI01 spec section 9.4: only APSS tooling crates go to crates.io.
-          # Standards are distributed as APSS bundles.
+          # DI01 spec section 9.4 (as amended by ADR-0002): crates.io is the
+          # standard distribution transport. Publish order:
+          #   Tier 1: apss-core
+          #   Tier 2: changed official standard crates (in dependency order)
+          #   Tier 3: apss (last; may depend on published standards)
+          # Experiments and meta-standard internal substandards are NOT published.
           publish_crate() {
             local name="$1"
             local dir="$2"
+            local version="$3"
 
-            echo "Publishing ${name}@${VERSION} from ${dir}..."
+            echo "Publishing ${name}@${version} from ${dir}..."
 
             # Check if already published (idempotency)
-            if cargo search "$name" 2>/dev/null | grep -q "^${name} = \"${VERSION}\""; then
+            if cargo search "$name" 2>/dev/null | grep -q "^${name} = \"${version}\""; then
               echo "  Already published - skipping"
               return
             fi
 
             cargo publish --manifest-path "$dir/Cargo.toml"
-            echo "  Published ${name}@${VERSION}"
+            echo "  Published ${name}@${version}"
 
-            # Wait for the crates.io index to update before the dependent crate
+            # Wait for the crates.io index to update before any dependent crate
             sleep 30
           }
 
-          # Publish in dependency order (DI01 spec section 9.3)
-          publish_crate "apss-core" "crates/apss-core"  # tier 1
-          publish_crate "apss" "crates/apss-bootstrap"  # tier 2
+          # Tier 1: apss-core (only when the tooling system changed)
+          if [ "$SYSTEM_CHANGED" = "true" ]; then
+            publish_crate "apss-core" "crates/apss-core" "$SYSTEM_VERSION"
+          else
+            echo "System unchanged - skipping apss-core."
+          fi
+
+          # Tier 2: changed OFFICIAL standard crates, in dependency order.
+          # Selection: changed_crates entries whose dir is under
+          # standards/v1/APS-V1-XXXX-slug with XXXX != 0000. This excludes the
+          # meta-standard (APS-V1-0000), its internal substandards, and
+          # experiments (standards-experimental/), which must not be published.
+          # apss-core is already published above, so standards resolve cleanly.
+          echo "$CHANGED_CRATES" | jq -c \
+            '[.[] | select((.dir | startswith("standards/v1/APS-V1-")) and (.dir | startswith("standards/v1/APS-V1-0000") | not))] | sort_by(.tier) | .[]' \
+          | while read -r crate; do
+              name=$(echo "$crate" | jq -r '.name')
+              dir=$(echo "$crate" | jq -r '.dir')
+              version=$(echo "$crate" | jq -r '.version')
+              publish_crate "$name" "$dir" "$version"
+            done
+
+          # Tier 3: apss bootstrap binary, last (may depend on published
+          # standards). Only when the tooling system changed.
+          if [ "$SYSTEM_CHANGED" = "true" ]; then
+            publish_crate "apss" "crates/apss-bootstrap" "$SYSTEM_VERSION"
+          else
+            echo "System unchanged - skipping apss."
+          fi
 
           echo ""
-          echo "APSS tooling published successfully."
+          echo "APSS crates published successfully."
