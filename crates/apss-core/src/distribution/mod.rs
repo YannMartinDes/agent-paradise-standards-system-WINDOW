@@ -200,6 +200,18 @@ pub fn validate_publishable_standard(crate_path: &Path) -> Diagnostics {
     diags
 }
 
+/// Whether a package at this path is published to crates.io.
+///
+/// Per ADR-0002, official standards and experiments publish to crates.io, but
+/// the meta-standard (APS-V1-0000) and its internal substandards (CF01, DI01,
+/// CL01, SS01) are never published. Discovery-metadata recommendations are
+/// therefore only meaningful for the former.
+fn publishes_to_crates_io(crate_path: &Path) -> bool {
+    !crate_path
+        .components()
+        .any(|c| c.as_os_str().to_string_lossy().starts_with("APS-V1-0000"))
+}
+
 /// Validate version consistency and publish-readiness for a standard crate.
 ///
 /// Checks:
@@ -341,44 +353,50 @@ pub fn validate_release_readiness(crate_path: &Path) -> Diagnostics {
     }
 
     // --- Discovery metadata ---
-    // These fields are not required to publish but they make a crate
-    // discoverable and presentable on crates.io. APSS tooling crates
-    // (apss-core, apss) carry them, so standard crates should too.
-    let has_readme = package.get("readme").is_some();
-    let has_keywords = package.get("keywords").is_some();
-    let has_categories = package.get("categories").is_some();
+    // These fields are not required to publish (cargo publish succeeds without
+    // them) but they make a crate discoverable and presentable on crates.io.
+    // They are info-level recommendations, not warnings, so they do not fail
+    // the distribution gate. The meta-standard and its internal substandards
+    // (CF01/DI01/CL01/SS01) are never published to crates.io per ADR-0002, so
+    // they are exempt entirely: nagging them for a crates.io landing page would
+    // contradict the distribution model.
+    if publishes_to_crates_io(crate_path) {
+        let has_readme = package.get("readme").is_some();
+        let has_keywords = package.get("keywords").is_some();
+        let has_categories = package.get("categories").is_some();
 
-    if !has_readme {
-        diags.push(
-            Diagnostic::warning(
-                error_codes::DI_MISSING_DISCOVERY_METADATA,
-                "Missing 'readme' in Cargo.toml  -  recommended for the crates.io landing page",
-            )
-            .with_path(&cargo_path)
-            .with_hint("Add 'readme = \"README.md\"' and a crate README"),
-        );
-    }
+        if !has_readme {
+            diags.push(
+                Diagnostic::info(
+                    error_codes::DI_MISSING_DISCOVERY_METADATA,
+                    "Missing 'readme' in Cargo.toml  -  recommended for the crates.io landing page",
+                )
+                .with_path(&cargo_path)
+                .with_hint("Add 'readme = \"README.md\"' and a crate README"),
+            );
+        }
 
-    if !has_keywords {
-        diags.push(
-            Diagnostic::warning(
-                error_codes::DI_MISSING_DISCOVERY_METADATA,
-                "Missing 'keywords' in Cargo.toml  -  recommended for crates.io discovery",
-            )
-            .with_path(&cargo_path)
-            .with_hint("Add 'keywords = [...]' (up to 5 terms, each 20 chars or fewer)"),
-        );
-    }
+        if !has_keywords {
+            diags.push(
+                Diagnostic::info(
+                    error_codes::DI_MISSING_DISCOVERY_METADATA,
+                    "Missing 'keywords' in Cargo.toml  -  recommended for crates.io discovery",
+                )
+                .with_path(&cargo_path)
+                .with_hint("Add 'keywords = [...]' (up to 5 terms, each 20 chars or fewer)"),
+            );
+        }
 
-    if !has_categories {
-        diags.push(
-            Diagnostic::warning(
-                error_codes::DI_MISSING_DISCOVERY_METADATA,
-                "Missing 'categories' in Cargo.toml  -  recommended for crates.io discovery",
-            )
-            .with_path(&cargo_path)
-            .with_hint("Add 'categories = [...]' using crates.io category slugs"),
-        );
+        if !has_categories {
+            diags.push(
+                Diagnostic::info(
+                    error_codes::DI_MISSING_DISCOVERY_METADATA,
+                    "Missing 'categories' in Cargo.toml  -  recommended for crates.io discovery",
+                )
+                .with_path(&cargo_path)
+                .with_hint("Add 'categories = [...]' using crates.io category slugs"),
+            );
+        }
     }
 
     // --- Publish flag ---
@@ -708,12 +726,15 @@ apss-core = "0.1.0"
     }
 
     #[test]
-    fn test_release_readiness_warns_on_missing_discovery_metadata() {
+    fn test_release_readiness_flags_missing_discovery_metadata_as_info() {
         let temp = tempfile::tempdir().unwrap();
 
-        // Has the required publish metadata but no readme/keywords/categories.
+        // A publishable standard path (not under APS-V1-0000-meta) with the
+        // required publish metadata but no readme/keywords/categories.
+        let crate_dir = temp.path().join("APS-V1-0001-code-topology");
+        std::fs::create_dir(&crate_dir).unwrap();
         std::fs::write(
-            temp.path().join("Cargo.toml"),
+            crate_dir.join("Cargo.toml"),
             r#"
 [package]
 name = "apss-v1-0001-code-topology"
@@ -725,10 +746,15 @@ repository = "https://example.com/repo"
         )
         .unwrap();
 
-        let diags = validate_release_readiness(temp.path());
+        let diags = validate_release_readiness(&crate_dir);
 
-        // No errors, only warnings.
+        // Discovery metadata is advisory: info, not warnings, so it never fails
+        // the distribution gate.
         assert!(!diags.has_errors(), "Unexpected errors: {diags}");
+        assert!(
+            !diags.has_warnings(),
+            "discovery metadata must not raise warnings: {diags}"
+        );
 
         let discovery: Vec<_> = diags
             .iter()
@@ -737,13 +763,13 @@ repository = "https://example.com/repo"
         assert_eq!(
             discovery.len(),
             3,
-            "expected one warning each for readme, keywords, categories"
+            "expected one info each for readme, keywords, categories"
         );
         for d in &discovery {
             assert_eq!(
                 d.severity,
-                crate::Severity::Warning,
-                "discovery metadata diagnostics must be warnings, not errors"
+                crate::Severity::Info,
+                "discovery metadata diagnostics must be info-level recommendations"
             );
         }
 
@@ -751,6 +777,36 @@ repository = "https://example.com/repo"
         assert!(messages.iter().any(|m| m.contains("readme")));
         assert!(messages.iter().any(|m| m.contains("keywords")));
         assert!(messages.iter().any(|m| m.contains("categories")));
+    }
+
+    #[test]
+    fn test_release_readiness_skips_discovery_for_unpublished_meta() {
+        let temp = tempfile::tempdir().unwrap();
+
+        // The meta-standard and its substandards are never published, so they
+        // get no discovery-metadata recommendations at all.
+        let crate_dir = temp.path().join("APS-V1-0000-meta");
+        std::fs::create_dir(&crate_dir).unwrap();
+        std::fs::write(
+            crate_dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "apss-v1-0000-meta"
+version = "1.0.0"
+description = "Meta standard"
+license = "MIT"
+repository = "https://example.com/repo"
+"#,
+        )
+        .unwrap();
+
+        let diags = validate_release_readiness(&crate_dir);
+        assert!(
+            !diags
+                .iter()
+                .any(|d| d.code == error_codes::DI_MISSING_DISCOVERY_METADATA),
+            "unpublished meta crates must get no discovery-metadata diagnostics: {diags}"
+        );
     }
 
     #[test]
