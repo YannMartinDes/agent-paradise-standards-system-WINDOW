@@ -1,4 +1,4 @@
-//! Rust Language Adapter (EXP-V1-0001.LANG01)
+//! Rust Language Adapter (APS-V1-0001.RS01)
 //!
 //! Analyzes Rust codebases and generates `.topology/` artifacts.
 //!

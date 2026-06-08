@@ -348,6 +348,17 @@ fn main() -> ExitCode {
                             pkg_diags.merge(apss_distribution::validate_release_readiness(
                                 &package.path,
                             ));
+                            // Parity poka-yoke (ADR-0002 / DI01): a standard crate's
+                            // [features] keys must equal its substandard codes.
+                            // Standards without a substandards/ dir are skipped by
+                            // the validator itself.
+                            if package.path.join("substandards").is_dir() {
+                                pkg_diags.merge(
+                                    apss_distribution::validate_substandard_feature_parity(
+                                        &package.path,
+                                    ),
+                                );
+                            }
                             if !pkg_diags.is_empty() {
                                 all_diags.push(Diagnostic::info(
                                     "DI_CHECKING",

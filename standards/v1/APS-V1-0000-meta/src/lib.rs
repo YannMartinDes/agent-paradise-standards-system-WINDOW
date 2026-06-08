@@ -41,6 +41,7 @@ pub mod error_codes {
     pub const INVALID_SUBSTANDARD_ID: &str = "INVALID_SUBSTANDARD_ID";
     pub const INVALID_PARENT_REF: &str = "INVALID_PARENT_REF";
     pub const PARENT_NOT_FOUND: &str = "PARENT_NOT_FOUND";
+    pub const SS_SUBSTANDARD_DIR_CODE_MISMATCH: &str = "SS_SUBSTANDARD_DIR_CODE_MISMATCH";
 
     // Repository layout errors
     pub const MISSING_STANDARDS_DIR: &str = "MISSING_STANDARDS_DIR";
@@ -328,6 +329,29 @@ impl MetaStandard {
                         .with_path(&metadata_path)
                         .with_hint("Use format: APS-V1-0000.SS01, APS-V1-0001.GH01, etc."),
                     );
+                } else if let (Some(dir_prefix), Some(code)) = (
+                    substandard_dir_prefix(path),
+                    extract_code_from_substandard_id(&metadata.substandard.id),
+                ) {
+                    // The directory-name prefix (part before the first '-') must equal
+                    // the profile code in the substandard ID (the suffix after the last '.').
+                    // substandard.toml id is the single source of truth for the code.
+                    if dir_prefix != code {
+                        diagnostics.push(
+                            Diagnostic::error(
+                                SS_SUBSTANDARD_DIR_CODE_MISMATCH,
+                                format!(
+                                    "Substandard directory prefix '{dir_prefix}' does not match the \
+                                     profile code '{code}' in id '{}'",
+                                    metadata.substandard.id
+                                ),
+                            )
+                            .with_path(&metadata_path)
+                            .with_hint(format!(
+                                "Rename the directory so its prefix is '{code}' (e.g. '{code}-<slug>')"
+                            )),
+                        );
+                    }
                 }
 
                 // Validate parent_id matches the ID prefix
@@ -699,6 +723,22 @@ pub fn is_valid_substandard_id(id: &str) -> bool {
 /// Extract the parent standard ID from a substandard ID.
 pub fn extract_parent_from_substandard_id(id: &str) -> Option<String> {
     id.find('.').map(|dot_pos| id[..dot_pos].to_string())
+}
+
+/// Extract the profile code from a substandard ID (the suffix after the last '.').
+///
+/// Example: "APS-V1-0001.RS01" -> "RS01".
+pub fn extract_code_from_substandard_id(id: &str) -> Option<String> {
+    id.rsplit_once('.').map(|(_, code)| code.to_string())
+}
+
+/// Extract the directory-name prefix of a substandard directory (the part before
+/// the first '-').
+///
+/// Example: ".../substandards/RS01-rust" -> "RS01".
+fn substandard_dir_prefix(path: &Path) -> Option<String> {
+    let name = path.file_name()?.to_str()?;
+    Some(name.split('-').next().unwrap_or(name).to_string())
 }
 
 /// Check if a string matches the experiment ID format (EXP-V1-XXXX).
@@ -1116,6 +1156,85 @@ maintainers = ["Test"]
                 .errors()
                 .any(|d| d.code == error_codes::INVALID_PARENT_REF)
         );
+    }
+
+    fn write_minimal_substandard(pkg_dir: &std::path::Path, id: &str) {
+        fs::create_dir_all(pkg_dir.join("docs")).unwrap();
+        fs::create_dir_all(pkg_dir.join("src")).unwrap();
+        fs::write(pkg_dir.join("docs/01_spec.md"), "# Spec").unwrap();
+        fs::write(pkg_dir.join("README.md"), "# Test").unwrap();
+        fs::write(
+            pkg_dir.join("src/lib.rs"),
+            "// lib\n#[cfg(test)]\nmod tests { #[test] fn it_works() {} }",
+        )
+        .unwrap();
+        fs::write(pkg_dir.join("Cargo.toml"), "[package]\nname = \"test\"").unwrap();
+        let substandard_toml = format!(
+            r#"
+schema = "aps.substandard/v1"
+
+[substandard]
+id = "{id}"
+name = "Test"
+slug = "test"
+version = "1.0.0"
+parent_id = "APS-V1-0001"
+parent_major = "1"
+
+[ownership]
+maintainers = ["Test"]
+"#
+        );
+        fs::write(pkg_dir.join("substandard.toml"), substandard_toml).unwrap();
+    }
+
+    #[test]
+    fn test_substandard_dir_prefix_matches_code_passes() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Dir prefix "RS01" matches the code "RS01" in the id.
+        let pkg_dir = temp_dir
+            .path()
+            .join("standards/v1/APS-V1-0001-test/substandards/RS01-rust");
+        write_minimal_substandard(&pkg_dir, "APS-V1-0001.RS01");
+
+        let meta = MetaStandard::new();
+        let diagnostics = meta.validate_package(&pkg_dir);
+
+        assert!(
+            !diagnostics
+                .errors()
+                .any(|d| d.code == error_codes::SS_SUBSTANDARD_DIR_CODE_MISMATCH),
+            "matching dir prefix should not produce a mismatch error"
+        );
+    }
+
+    #[test]
+    fn test_substandard_dir_prefix_mismatch_fails() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        // Dir prefix "VIZ01" does not match the code "VZ01" in the id.
+        let pkg_dir = temp_dir
+            .path()
+            .join("standards/v1/APS-V1-0001-test/substandards/VIZ01-dashboard");
+        write_minimal_substandard(&pkg_dir, "APS-V1-0001.VZ01");
+
+        let meta = MetaStandard::new();
+        let diagnostics = meta.validate_package(&pkg_dir);
+
+        assert!(
+            diagnostics
+                .errors()
+                .any(|d| d.code == error_codes::SS_SUBSTANDARD_DIR_CODE_MISMATCH),
+            "mismatched dir prefix should produce SS_SUBSTANDARD_DIR_CODE_MISMATCH"
+        );
+    }
+
+    #[test]
+    fn test_extract_code_from_substandard_id() {
+        assert_eq!(
+            extract_code_from_substandard_id("APS-V1-0001.RS01"),
+            Some("RS01".to_string())
+        );
+        assert_eq!(extract_code_from_substandard_id("APS-V1-0001"), None);
     }
 
     #[test]

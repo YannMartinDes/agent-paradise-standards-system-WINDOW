@@ -1,4 +1,4 @@
-//! Topology Visualization Dashboard (EXP-V1-0001.VIZ01)
+//! Topology Visualization Dashboard (APS-V1-0001.VZ01)
 //!
 //! This substandard provides interactive HTML visualizations for code topology data.
 //! Each visualization offers a different perspective on the codebase structure and health.

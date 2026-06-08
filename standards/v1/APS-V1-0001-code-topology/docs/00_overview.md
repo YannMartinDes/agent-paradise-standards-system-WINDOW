@@ -65,10 +65,10 @@ APS-V1-0001 (This Standard)
 └── Projector Interface
 
 Substandards:
-├── APS-V1-0001.3D01 — 3D Force-Directed Visualization
-├── APS-V1-0001.VIZ01 — Dashboard Visualization
-├── APS-V1-0001.VIZ01-mermaid — Mermaid Diagrams
-├── APS-V1-0001.LANG01 — Rust Language Adapter
+├── APS-V1-0001.FD01 — 3D Force-Directed Visualization
+├── APS-V1-0001.VZ01 — Dashboard Visualization
+├── APS-V1-0001.MM01 — Mermaid Diagrams
+├── APS-V1-0001.RS01 — Rust Language Adapter
 └── APS-V1-0001.CI01 — GitHub Actions Integration
 ```
 

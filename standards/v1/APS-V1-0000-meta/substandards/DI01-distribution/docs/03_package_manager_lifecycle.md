@@ -135,16 +135,17 @@ APSS MUST preserve non-managed content when updating a file that already exists.
 
 1. Read the APSS project config.
 2. Read `apss.lock` if present.
-3. Resolve missing APSS bundles or fail if `--locked` is set.
+3. Resolve missing standards from crates.io (ADR-0002), or fail if `--locked`
+   is set.
 4. Generate the repo-local build crate.
 5. Build the repo-local runtime.
 6. Install managed enforcement files, including hooks if enabled.
 7. Validate installation state.
 
 `apss install --bundle-dir <path>` SHOULD consume a local APSS bundle
-directory for distribution testing before registry publication exists. It
-MUST be treated as a local source and MUST NOT hide unresolved registry
-state in release-ready installs.
+directory for development, offline, and air-gapped installation. It MUST be
+treated as a local source and MUST NOT hide unresolved registry state in
+release-ready installs.
 
 ### 4.4 Update
 
@@ -158,19 +159,19 @@ state in release-ready installs.
 
 ## 5. Lockfile Semantics
 
-`apss.lock` MUST pin exact standard bundle state.
+`apss.lock` MUST pin exact resolved standard state.
 
 Published registry entries SHOULD include:
 
 - Standard ID.
 - Slug.
-- Bundle package name.
+- Standard crate name.
 - Exact version.
-- Registry source.
+- Registry source (`registry+https://crates.io`).
 - Checksum.
-- Enabled substandards.
+- Enabled substandards (resolved to cargo features of the parent crate).
 
-Local development entries MAY use path or bundle sources:
+Local development and offline entries MAY use path or bundle sources:
 
 ```text
 path+file:///absolute/path/to/standard

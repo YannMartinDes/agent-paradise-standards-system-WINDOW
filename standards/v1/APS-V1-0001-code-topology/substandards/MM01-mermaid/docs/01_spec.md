@@ -1,4 +1,4 @@
-# APS-V1-0001.VIZ01 — Mermaid Diagram Projector (Specification)
+# APS-V1-0001.MM01 — Mermaid Diagram Projector (Specification)
 
 **Version**: 0.1.0
 **Status**: Promoted

@@ -34,10 +34,10 @@ Standards **produce artifacts** → substandards **consume them and produce furt
 APS-V1-0001 (Code Topology)
 ├── Produces: .topology/metrics/*.json, .topology/graphs/*.json
 │
-├── LANG01-rust          Rust source → topology data (input adapter)
-├── VIZ01-dashboard      .topology/ → HTML dashboard with CodeCity, 3D, clusters
-├── VIZ01-mermaid        .topology/graphs/ → Mermaid dependency diagrams
-├── 3D01-force-directed  .topology/metrics/ → WebGL 3D coupling visualization
+├── RS01-rust            Rust source → topology data (input adapter)
+├── VZ01-dashboard       .topology/ → HTML dashboard with CodeCity, 3D, clusters
+├── MM01-mermaid         .topology/graphs/ → Mermaid dependency diagrams
+├── FD01-force-directed  .topology/metrics/ → WebGL 3D coupling visualization
 └── CI01-github-actions  .topology/ → PR comment with diff analysis
 ```
 
@@ -49,10 +49,10 @@ EXP-V1-0003 (Fitness Functions)
 
 ## Using APSS in Your Project
 
-APSS delivers through two channels:
+APSS uses crates.io as its distribution transport (see [ADR-0002](standards/v1/APS-V1-0000-meta/docs/adrs/0002-crates-io-distribution.md)):
 
-- **crates.io delivers the tooling**: the `apss` CLI binary, built on `apss-core`. These are the only crates published to crates.io.
-- **APSS bundles deliver the standards**: standards, substandards, and experiments are distributed as versioned bundles, never as crates.io crates.
+- **crates.io delivers the tooling**: the `apss` CLI binary, built on `apss-core`.
+- **crates.io delivers the standards**: each official standard publishes as one crate (for example `apss-v1-0001-code-topology`), and its substandards ship as cargo features of that crate. `apss install` resolves standards from crates.io, no APSS checkout required.
 
 ```bash
 # One-time: install the global CLI
@@ -60,12 +60,14 @@ cargo install apss
 
 # In your repo
 apss init        # generates APSS.yaml, the user-owned project manifest
-apss install     # resolves standards, writes apss.lock, installs git hooks
+apss add code-topology   # add a standard to APSS.yaml
+apss install     # resolves standards from crates.io, writes apss.lock, builds the composed binary, installs git hooks
 apss validate    # validate the project (also runs from the pre-commit hook)
 apss status      # show project configuration and status
+apss run code-topology analyze .   # run a standard's command via the composed binary
 ```
 
-Until the public bundle registry ships, point installs at a locally built bundle directory:
+For offline or air-gapped installs, build a bundle locally and point the install at it instead. Bundles are the optional offline and catalog format, not the default transport:
 
 ```bash
 apss install --bundle-dir /path/to/bundles

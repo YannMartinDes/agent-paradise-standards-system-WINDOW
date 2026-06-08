@@ -102,7 +102,7 @@ dependencies = [
 
 [[package]]
 name = "aps-v1-0000-meta"
-version = "1.3.0"
+version = "1.5.0"
 dependencies = [
  "apss-core",
  "tempfile",
@@ -148,7 +148,7 @@ dependencies = [
 
 [[package]]
 name = "apss-distribution"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "apss-core",
  "semver",

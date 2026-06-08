@@ -1,4 +1,4 @@
-//! Mermaid Diagram Projector (EXP-V1-0001.VIZ01)
+//! Mermaid Diagram Projector (APS-V1-0001.MM01)
 //!
 //! Generates Mermaid diagrams from code topology artifacts:
 //! - Dependency flowcharts

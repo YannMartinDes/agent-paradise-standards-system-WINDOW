@@ -2,14 +2,15 @@
 
 ## Purpose
 
-This runbook captures the manual end-to-end checks for APSS package installation, bundle installation, validation, and git hook behavior. Run it before publishing `apss-core` and `apss` to crates.io, and after any change to install, config, lockfile, hook, or bundle behavior.
+This runbook captures the manual end-to-end checks for APSS package installation, validation, and git hook behavior. The primary install path resolves the standard from crates.io (the distribution transport per ADR-0002); the bundle path is exercised as the offline alternative. Run it before publishing `apss-core`, the official standard crates, and `apss` to crates.io, and after any change to install, config, lockfile, hook, or bundle behavior.
 
 ## Preconditions
 
 - Current working tree is on the APSS branch being validated.
 - Rust and Cargo are installed.
 - The example repo exists at `/Users/neural/Code/AgentParadise/apss-example-repo`.
-- Temporary bundle output can be written under `/tmp`.
+- Network access to crates.io for the registry install path.
+- Temporary bundle output can be written under `/tmp` (needed only for the offline bundle path).
 
 ## 1. Run Repository QA
 
@@ -43,7 +44,9 @@ Expected result:
 - `~/.cargo/bin/apss` is installed from the local branch.
 - `apss --help` shows the bootstrap CLI.
 
-## 3. Build Local Standard Bundle
+## 3. Build Local Standard Bundle (Offline Path Only)
+
+The primary registry install path (Section 5) needs no bundle. Build a bundle only when validating the offline `--bundle-dir` path.
 
 From the APSS repository:
 
@@ -84,9 +87,26 @@ standards:
 
 If the repo still has an old `apss.toml`, rename it to `APSS.yaml` and convert the content to YAML before continuing.
 
-## 5. Install Bundle Into Example Repo
+## 5. Install Into Example Repo (Registry Path, Primary)
 
 From `/Users/neural/Code/AgentParadise/apss-example-repo`:
+
+```bash
+apss install
+```
+
+Expected result:
+
+- The Code Topology standard resolves from crates.io and `apss.lock` records the resolved version, checksum, and a `registry+https://crates.io` source.
+- `.apss/build/Cargo.toml` is generated with a registry dependency on the standard crate (not a path or bundle source).
+- `.apss/build/src/main.rs` is generated.
+- `.apss/bin/apss` is installed.
+- `.apss/build/target` is removed after a successful build.
+- `.git/hooks/pre-commit` is installed or refreshed.
+
+### 5a. Install From Bundle (Offline Alternative)
+
+To validate the offline path instead, install with `--bundle-dir` using the bundle from Section 3:
 
 ```bash
 apss install --bundle-dir /tmp/apss-e2e-bundles/APS-V1-0001-code-topology-0.1.0.apss
@@ -94,6 +114,7 @@ apss install --bundle-dir /tmp/apss-e2e-bundles/APS-V1-0001-code-topology-0.1.0.
 
 Expected result:
 
+- The same install outcome as the registry path, except the standard source comes from the local bundle.
 - `apss.lock` is updated.
 - `.apss/build/Cargo.toml` and `.apss/build/src/main.rs` are generated.
 - `.apss/bin/apss` is installed.
@@ -149,7 +170,7 @@ rm -rf /tmp/apss-example-hooks-off
 cp -a /Users/neural/Code/AgentParadise/apss-example-repo /tmp/apss-example-hooks-off
 perl -0pi -e 's/pre_commit: true/pre_commit: false/' /tmp/apss-example-hooks-off/APSS.yaml
 cd /tmp/apss-example-hooks-off
-apss install --bundle-dir /tmp/apss-e2e-bundles/APS-V1-0001-code-topology-0.1.0.apss 2>&1 | tee /tmp/apss-hooks-off.log
+apss install 2>&1 | tee /tmp/apss-hooks-off.log
 rg "Warning: APSS pre-commit hook installation is disabled" /tmp/apss-hooks-off.log
 ```
 
@@ -208,5 +229,6 @@ Expected result:
 ## Notes
 
 - crates.io publishes are permanent. Run this runbook before publishing.
-- Publish order is `apss-core` first, then `apss` after the crates.io index sees `apss-core`.
+- Publish order (ADR-0002) is `apss-core` first, then each changed official standard crate (for example `apss-v1-0001-code-topology`) in dependency order, then `apss` after the crates.io index sees its dependencies.
+- The registry install path (Section 5) only works once the standard crate is published. Before first publish, validate end to end via the offline bundle path (Sections 3 and 5a).
 - Do not commit `/tmp` artifacts, `.apss/build/target`, or generated local test repos.

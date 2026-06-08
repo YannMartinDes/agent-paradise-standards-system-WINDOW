@@ -25,7 +25,7 @@
 ## Running Tests
 
 ```bash
-cd substandards/3D01-force-directed
+cd substandards/FD01-force-directed
 cargo test
 ```
 

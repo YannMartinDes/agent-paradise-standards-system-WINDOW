@@ -1,4 +1,4 @@
-# EXP-V1-0001.3D01 — 3D Force-Directed Coupling Visualization (Specification)
+# APS-V1-0001.FD01 — 3D Force-Directed Coupling Visualization (Specification)
 
 **Version**: 0.1.0  
 **Status**: Experimental  
