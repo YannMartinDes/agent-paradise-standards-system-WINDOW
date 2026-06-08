@@ -66,6 +66,9 @@ pub mod error_codes {
     /// Crate is missing required metadata for publishing.
     pub const DI_MISSING_PUBLISH_METADATA: &str = "DI_MISSING_PUBLISH_METADATA";
 
+    /// Crate is missing recommended discovery metadata for crates.io.
+    pub const DI_MISSING_DISCOVERY_METADATA: &str = "DI_MISSING_DISCOVERY_METADATA";
+
     /// Crate uses `publish = false` but is expected to be publishable.
     pub const DI_PUBLISH_DISABLED: &str = "DI_PUBLISH_DISABLED";
 }
@@ -334,6 +337,47 @@ pub fn validate_release_readiness(crate_path: &Path) -> Diagnostics {
                 "Missing 'repository' in Cargo.toml  -  required for crates.io publishing",
             )
             .with_path(&cargo_path),
+        );
+    }
+
+    // --- Discovery metadata ---
+    // These fields are not required to publish but they make a crate
+    // discoverable and presentable on crates.io. APSS tooling crates
+    // (apss-core, apss) carry them, so standard crates should too.
+    let has_readme = package.get("readme").is_some();
+    let has_keywords = package.get("keywords").is_some();
+    let has_categories = package.get("categories").is_some();
+
+    if !has_readme {
+        diags.push(
+            Diagnostic::warning(
+                error_codes::DI_MISSING_DISCOVERY_METADATA,
+                "Missing 'readme' in Cargo.toml  -  recommended for the crates.io landing page",
+            )
+            .with_path(&cargo_path)
+            .with_hint("Add 'readme = \"README.md\"' and a crate README"),
+        );
+    }
+
+    if !has_keywords {
+        diags.push(
+            Diagnostic::warning(
+                error_codes::DI_MISSING_DISCOVERY_METADATA,
+                "Missing 'keywords' in Cargo.toml  -  recommended for crates.io discovery",
+            )
+            .with_path(&cargo_path)
+            .with_hint("Add 'keywords = [...]' (up to 5 terms, each 20 chars or fewer)"),
+        );
+    }
+
+    if !has_categories {
+        diags.push(
+            Diagnostic::warning(
+                error_codes::DI_MISSING_DISCOVERY_METADATA,
+                "Missing 'categories' in Cargo.toml  -  recommended for crates.io discovery",
+            )
+            .with_path(&cargo_path)
+            .with_hint("Add 'categories = [...]' using crates.io category slugs"),
         );
     }
 
@@ -660,6 +704,81 @@ apss-core = "0.1.0"
                 .iter()
                 .any(|d| d.code == error_codes::DI_CARGO_TOML_PARSE_ERROR),
             "expected DI_CARGO_TOML_PARSE_ERROR for malformed Cargo.toml"
+        );
+    }
+
+    #[test]
+    fn test_release_readiness_warns_on_missing_discovery_metadata() {
+        let temp = tempfile::tempdir().unwrap();
+
+        // Has the required publish metadata but no readme/keywords/categories.
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "apss-v1-0001-code-topology"
+version = "1.0.0"
+description = "A standard"
+license = "MIT"
+repository = "https://example.com/repo"
+"#,
+        )
+        .unwrap();
+
+        let diags = validate_release_readiness(temp.path());
+
+        // No errors, only warnings.
+        assert!(!diags.has_errors(), "Unexpected errors: {diags}");
+
+        let discovery: Vec<_> = diags
+            .iter()
+            .filter(|d| d.code == error_codes::DI_MISSING_DISCOVERY_METADATA)
+            .collect();
+        assert_eq!(
+            discovery.len(),
+            3,
+            "expected one warning each for readme, keywords, categories"
+        );
+        for d in &discovery {
+            assert_eq!(
+                d.severity,
+                crate::Severity::Warning,
+                "discovery metadata diagnostics must be warnings, not errors"
+            );
+        }
+
+        let messages: Vec<&str> = discovery.iter().map(|d| d.message.as_str()).collect();
+        assert!(messages.iter().any(|m| m.contains("readme")));
+        assert!(messages.iter().any(|m| m.contains("keywords")));
+        assert!(messages.iter().any(|m| m.contains("categories")));
+    }
+
+    #[test]
+    fn test_release_readiness_no_discovery_warning_when_present() {
+        let temp = tempfile::tempdir().unwrap();
+
+        std::fs::write(
+            temp.path().join("Cargo.toml"),
+            r#"
+[package]
+name = "apss-v1-0001-code-topology"
+version = "1.0.0"
+description = "A standard"
+license = "MIT"
+repository = "https://example.com/repo"
+readme = "README.md"
+keywords = ["topology"]
+categories = ["development-tools"]
+"#,
+        )
+        .unwrap();
+
+        let diags = validate_release_readiness(temp.path());
+        assert!(
+            !diags
+                .iter()
+                .any(|d| d.code == error_codes::DI_MISSING_DISCOVERY_METADATA),
+            "no discovery-metadata warnings expected when all fields present: {diags}"
         );
     }
 

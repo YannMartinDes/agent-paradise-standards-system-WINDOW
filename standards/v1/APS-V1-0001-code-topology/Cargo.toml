@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "Code Topology and Coupling Analysis "
+readme = "README.md"
+keywords = ["topology", "architecture", "coupling", "analysis"]
+categories = ["development-tools"]
 
 [lib]
 name = "code_topology"

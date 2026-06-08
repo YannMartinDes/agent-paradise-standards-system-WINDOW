@@ -1,26 +1,50 @@
-# Code Topology and Coupling Analysis
+# apss-v1-0001-code-topology
 
-**ID:** `APS-V1-0001`
-**Type:** Standard
-**Slug:** `code-topology`
-**Version:** `0.1.0`
+Code Topology and Coupling Analysis: an executable engineering standard for the
+Agent Paradise Standards System (APSS).
 
-## Index
+This crate measures the architectural shape of a codebase and turns it into
+inspectable artifacts and visualizations. It computes complexity, coupling, and
+module-structure metrics, writes them under a `.topology/` artifact directory,
+and renders up to five visualizations from that data:
 
-- [standard.toml](standard.toml)
-- [Specification](docs/01_spec.md)
-- [Examples](examples/)
-- [Tests](tests/)
-- [Agent Skills](agents/skills/)
+- An interactive dashboard (HTML).
+- A Mermaid module-dependency diagram.
+- A 3D force-directed coupling graph.
+- A code-city style structure view.
+- An APS topology summary view.
 
-## Validation
+## How it is consumed
+
+This is a standard crate, not a standalone tool. You do not run it directly.
+APSS standards are composed into a project-local CLI by the `apss` bootstrap,
+which resolves the standard from crates.io, pins it in `apss.lock`, and builds a
+binary that contains only the standards your project declares.
 
 ```bash
-cargo run -p aps-cli --bin apss-dev -- v1 validate standard APS-V1-0001
+cargo install apss              # install the bootstrap CLI
+apss add code-topology          # declare the standard in APSS.yaml
+apss install                    # resolve, pin, and build the composed binary
+apss run code-topology analyze .            # analyze the codebase into .topology/
+apss run code-topology viz .topology --type all   # render the visualizations
 ```
 
-Run the full repository validation with:
+Commit `APSS.yaml` and `apss.lock`. The generated `.apss/` runtime is build
+output and stays out of git.
 
-```bash
-cargo run -p aps-cli --bin apss-dev -- v1 validate repo
-```
+## Substandards as cargo features
+
+The visualizers and language analyzers ship as cargo features of this crate, so
+a project can compose a smaller binary by selecting only what it needs:
+`lang-rust`, `viz-dashboard`, `viz-mermaid`, `viz-3d`, and `ci-github-actions`.
+APSS maps your declared substandard selection to these features automatically.
+
+## Documentation
+
+Full specifications, the standards catalog, and the distribution lifecycle live
+in the
+[agent-paradise-standards-system repository](https://github.com/AgentParadise/agent-paradise-standards-system).
+
+## License
+
+MIT
