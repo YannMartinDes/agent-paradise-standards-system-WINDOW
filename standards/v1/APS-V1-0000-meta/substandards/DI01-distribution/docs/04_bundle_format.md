@@ -2,11 +2,15 @@
 
 ## Purpose
 
-An APSS bundle is the distribution unit for a standard or substandard. It is
-what a registry stores, what `apss install` resolves, and what a consumer
-repository can install without cloning the full APSS standards repository.
+An APSS bundle is the OFFLINE and catalog format for a standard or
+substandard. The required distribution transport for official standards is
+crates.io (see ADR-0002 and DI01 spec Section 2.1); bundles are an optional
+mechanism for development, offline, and air-gapped installation through the
+`apss install --bundle-dir <path>` path, and a catalog format that records
+which standards, versions, and features travel together.
 
-Tooling package managers install APSS tools. APSS bundles install standards.
+Tooling package managers install APSS tools. crates.io delivers standards;
+bundles deliver the same standards in the offline and catalog case.
 
 ## Bundle Directory
 
@@ -93,19 +97,22 @@ implementation = "."
 
 ## Local Installation
 
-For local testing, `apss install --bundle-dir <path>` MAY consume a bundle
-directory directly. This path MUST behave like installing the same standard
-from a registry-resolved bundle, except that checksum and registry resolution
-may be skipped while the package manager is still incomplete.
+For development, offline, and air-gapped installation,
+`apss install --bundle-dir <path>` consumes a bundle directory directly. This
+path MUST behave like installing the same standard from the crates.io
+transport, except that checksum and registry resolution may be skipped because
+the source is local.
 
 ## Registry Installation
 
-Registry installation MUST eventually resolve:
+Registry installation is the default path and resolves against crates.io
+(ADR-0002). It MUST resolve:
 
-- The selected bundle version
+- The selected standard crate version
 - A content checksum
-- A registry source descriptor
-- The implementation crate source inside the bundle
+- A registry source descriptor (`registry+https://crates.io`)
+- The implementation crate source, with the selected substandard features
 
-Until registry resolution exists, unresolved registry lockfiles MUST be
-refused unless a local repository or local bundle path is supplied.
+Unresolved registry lockfiles MUST be refused in release-ready locked
+installs. The offline `--bundle-dir` and `--local-repo` paths supply a local
+source when crates.io resolution is not desired or not available.

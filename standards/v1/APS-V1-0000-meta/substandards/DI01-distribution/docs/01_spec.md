@@ -1,8 +1,30 @@
 # APS-V1-0000.DI01  -  Distribution & Installation (Specification)
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Status**: Active
 **Parent**: APS-V1-0000 (Meta-Standard)
+
+---
+
+## Distribution Model
+
+The governing decision for how standards are distributed is recorded in
+[ADR-0002: crates.io as Standard Distribution Transport](../../../docs/adrs/0002-crates-io-distribution.md).
+
+In summary, and as reflected throughout this specification:
+
+- crates.io is the distribution transport for official standards. Each
+  official standard publishes as one crate, and substandards ship as cargo
+  features of that parent crate rather than as separate published crates
+  (cross-ref SS01).
+- APSS bundles are RETAINED as an optional offline, development, and
+  air-gapped mechanism (the `--bundle-dir` install path) and as a catalog
+  format that describes which standards, versions, and features travel
+  together. They are no longer the required transport.
+
+ADR-0002 supersedes the earlier bundle-as-transport language. Where this
+document describes bundles, treat them as the offline and catalog format
+unless the text explicitly says otherwise.
 
 ---
 
@@ -16,8 +38,10 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 This substandard defines:
 
-- How standards are packaged and published as APSS-native bundles
-- How Rust crates may be used inside bundles as implementation artifacts
+- How official standards are packaged and published as crates.io crates, with
+  substandards shipped as cargo features of the parent crate (ADR-0002)
+- The APSS bundle format used as the offline, development, and catalog
+  mechanism, and how Rust crates are used as implementation artifacts
 - The bootstrap CLI binary used for project onboarding (canonical binary name
   is being resolved in repo issue 64; this spec refers to it as the
   "bootstrap" where the name can be avoided)
@@ -30,26 +54,37 @@ This substandard defines:
 
 ---
 
-## 2. Standard Bundle Publishing
+## 2. Standard Publishing And The Bundle Format
 
 ### 2.1 Distribution Boundary
 
-Standards and substandards MUST be distributed as APSS-native bundles.
-The APSS CLI, bootstrap binary, GitHub Action, and language-specific
-wrappers MAY be distributed through crates.io, npm, binary releases, or other
-tooling package managers. A standard's Rust crate MUST NOT be the
-user-facing distribution unit unless the package is explicitly marked as a
-tooling crate or independent Rust library.
+The standard distribution transport is crates.io (ADR-0002). Each official
+standard MUST publish as one crate (for example `apss-v1-0001-code-topology`).
+Substandards MUST NOT be separate published crates; substandard code ships as
+cargo features of the parent standard crate (cross-ref SS01). Experiments
+publish under their experiment name. The APSS CLI, bootstrap binary, GitHub
+Action, and language-specific wrappers are distributed through crates.io, npm,
+binary releases, or other tooling package managers.
+
+APSS bundles are RETAINED as an OPTIONAL offline, development, and air-gapped
+mechanism, consumed through the `apss install --bundle-dir <path>` path, and
+as a catalog format (Sections 2.2 to 2.4). Bundles are not the required
+transport for standards.
 
 This separates two concerns:
 
 - Tooling distribution installs the APSS tools.
 - Standard distribution installs APSS standards and explicitly declared
-  experiments into a consumer repository.
+  experiments into a consumer repository from crates.io, with bundles
+  available as the offline and catalog fallback.
 
 ### 2.2 Bundle Naming Convention
 
-Bundle directories and archive filenames MUST follow:
+Sections 2.2 to 2.4 define the offline and catalog bundle format. They apply
+to the optional `--bundle-dir` development, offline, and air-gapped path, not
+to the crates.io transport described in Section 2.1.
+
+When a bundle is produced, its directory and archive filename MUST follow:
 
 ```
 APS-V1-NNNN-<slug>-<version>.apss
@@ -71,7 +106,7 @@ Examples:
 
 ### 2.3 Required Bundle Contents
 
-Every bundle MUST contain:
+When a bundle is produced for the offline or catalog path, it MUST contain:
 
 - `bundle.toml`, the APSS bundle manifest
 - The source package metadata file, such as `standard.toml` or
@@ -84,7 +119,7 @@ Generated build outputs such as `target/` MUST NOT be included.
 
 ### 2.4 Bundle Manifest
 
-`bundle.toml` MUST use this schema:
+When a bundle is produced, its `bundle.toml` MUST use this schema:
 
 ```toml
 schema = "apss.bundle/v1"
@@ -216,8 +251,10 @@ contract. The pipeline below stitches the three together.
 
 1. Parse and validate `APSS.yaml` via CF01 (with cascade applied for
    workspaces). Refuse to proceed on any error-severity diagnostic.
-2. Resolve version ranges against the APSS bundle registry index, producing
-   one `ResolvedStandard` per `standards.<slug>` entry in the manifest.
+2. Resolve version ranges against crates.io (Cargo is the registry, ADR-0002),
+   or against a local bundle directory or local repository when the offline
+   `--bundle-dir` or `--local-repo` path is used, producing one
+   `ResolvedStandard` per `standards.<slug>` entry in the manifest.
 3. Apply promoted-experiment aliases for any requested `EXP-V1-XXXX` package
    whose registry entry points to an official `APS-V1-XXXX` replacement
    (Section 4.2).
@@ -231,8 +268,9 @@ contract. The pipeline below stitches the three together.
    absent or `enabled: false` in the current manifest MUST have its
    uninstall contract invoked. Removal MUST leave operator data and source
    code untouched.
-8. Generate `.apss/build/Cargo.toml` with resolved bundle implementation
-   dependencies.
+8. Generate `.apss/build/Cargo.toml` with resolved standard crate
+   dependencies (registry dependencies by default, with the selected
+   substandard features; path or bundle sources in offline mode).
 9. Generate `.apss/build/src/main.rs` with `register()` calls.
 10. Run `cargo build --release --manifest-path .apss/build/Cargo.toml`.
 11. Copy binary to `.apss/bin/<bootstrap>`.
@@ -481,21 +519,32 @@ On merge to `release`:
    - Per-standard tags: `APS-V1-NNNN-vX.Y.Z` (for each bumped standard)
    - Per-substandard tags: `APS-V1-NNNN.PP01-vX.Y.Z` (for each bumped substandard)
 3. Create GitHub Release with changelog from PR body
-4. Publish APSS tooling to crates.io when the system version changed:
-   - Tier 1: `apss-core`
-   - Tier 2: `apss` bootstrap binary
-5. Publish standards as APSS bundles when standard versions changed.
-6. Previously published versions remain available  -  consumers are not forced
+4. Publish to crates.io in dependency order (ADR-0002):
+   - Tier 1: `apss-core` (when the system version changed)
+   - Tier 2: each changed official standard crate, in dependency order, with
+     the same already-published idempotency guard
+   - Tier 3: `apss` bootstrap binary (when the system version changed)
+5. Previously published versions remain available  -  consumers are not forced
    to upgrade
 
 ### 9.4 Publish Scope
 
-Only APSS tooling crates are published to crates.io by default. CF01, DI01,
-CL01, SS01, and standard implementation crates are standards packages, not
-public product crates, unless explicitly marked as independent Rust libraries.
+Per ADR-0002, the following crates are published to crates.io:
 
-Standard distribution MUST use APSS bundles. The system MUST work with any
-combination of previously published standard bundle versions within their
+- APSS tooling crates (`apss-core` and the `apss` bootstrap binary).
+- Official standard crates, one per official standard (for example
+  `apss-v1-0001-code-topology`).
+- Experiment crates, published under their `EXP-V1-XXXX` experiment name.
+
+The meta-standard internal substandard crates (CF01, DI01, CL01, SS01) remain
+UNPUBLISHED. They are consumer-internal governance packages, not public
+distribution units, and may retain separate workspace crates. This carve-out
+may be revisited.
+
+This supersedes the earlier rule that standard distribution must use APSS
+bundles. crates.io is the standard transport (Section 2.1); bundles are the
+optional offline and catalog format. The system MUST work with any
+combination of previously published standard crate versions within their
 declared semver compatibility ranges.
 
 ---
