@@ -117,4 +117,3 @@ from = { path = "src/**" }
 to = { path = "src/**" }
 circular = true
 severity = "error"
-

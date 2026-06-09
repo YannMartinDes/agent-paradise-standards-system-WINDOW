@@ -15,7 +15,7 @@
 
 use apss_core::registry::{CommandHandler, CommandInfo};
 
-use crate::{FitnessValidator, RuleStatus};
+use crate::{FitnessReport, FitnessValidator, RuleStatus};
 
 /// Handler that backs `run architecture-fitness <command>` in composed
 /// binaries and `run fitness <command>` in the dev CLI.
@@ -73,6 +73,7 @@ fn validate(args: &[String], repo_root: &std::path::Path, _verbose: bool) -> i32
     let mut positional_path: Option<&str> = None;
     let mut config_path: Option<std::path::PathBuf> = None;
     let mut report_path: Option<&String> = None;
+    let mut previous_path: Option<&String> = None;
     let mut i = 0;
     while i < args.len() {
         match args[i].as_str() {
@@ -82,6 +83,11 @@ fn validate(args: &[String], repo_root: &std::path::Path, _verbose: bool) -> i32
             }
             "--report" => {
                 report_path = args.get(i + 1);
+                i += 2;
+            }
+            // `--previous` is accepted as a back-compat alias of `--previous-report`.
+            "--previous-report" | "--previous" => {
+                previous_path = args.get(i + 1);
                 i += 2;
             }
             arg if !arg.starts_with('-') && positional_path.is_none() => {
@@ -111,6 +117,37 @@ fn validate(args: &[String], repo_root: &std::path::Path, _verbose: bool) -> i32
         Err(e) => {
             eprintln!("Error: {e}");
             return 1;
+        }
+    };
+
+    // Attach a previous report for trend deltas when requested. The path is
+    // resolved relative to the validate target (per the spec). A requested but
+    // unreadable or malformed previous report is a hard error: a silently
+    // dropped trend would mislead.
+    let validator = match previous_path {
+        None => validator,
+        Some(prev) => {
+            let prev_path = {
+                let p = std::path::Path::new(prev);
+                if p.is_absolute() {
+                    p.to_path_buf()
+                } else {
+                    target.join(p)
+                }
+            };
+            match std::fs::read_to_string(&prev_path)
+                .map_err(|e| e.to_string())
+                .and_then(|s| serde_json::from_str::<FitnessReport>(&s).map_err(|e| e.to_string()))
+            {
+                Ok(prev_report) => validator.with_previous_report(prev_report),
+                Err(e) => {
+                    eprintln!(
+                        "Error reading previous report '{}': {e}",
+                        prev_path.display()
+                    );
+                    return 1;
+                }
+            }
         }
     };
 
@@ -180,21 +217,28 @@ fn validate(args: &[String], repo_root: &std::path::Path, _verbose: bool) -> i32
         report.summary.stale_exceptions,
     );
 
-    // Write JSON report if requested.
+    // Write JSON report if requested. A failed write or serialize is a hard
+    // error: returning success with a missing report artifact would let CI pass
+    // while the expected output is absent.
+    let mut report_write_failed = false;
     if let Some(report_file) = report_path {
         match serde_json::to_string_pretty(&report) {
             Ok(json) => {
                 if let Err(e) = std::fs::write(report_file, json) {
-                    eprintln!("Error writing report: {e}");
+                    eprintln!("Error writing report to '{report_file}': {e}");
+                    report_write_failed = true;
                 } else {
                     println!("\nReport written to: {report_file}");
                 }
             }
-            Err(e) => eprintln!("Error serializing report: {e}"),
+            Err(e) => {
+                eprintln!("Error serializing report: {e}");
+                report_write_failed = true;
+            }
         }
     }
 
-    if FitnessValidator::has_failures(&report) {
+    if report_write_failed || FitnessValidator::has_failures(&report) {
         1
     } else {
         0
@@ -216,9 +260,12 @@ fn print_help() {
     println!("    validate <path>    Validate fitness rules against topology artifacts");
     println!();
     println!("OPTIONS:");
-    println!("    --config <file>    Path to fitness.toml (default: ./fitness.toml)");
-    println!("    --report <file>    Write JSON report to file");
-    println!("    --help             Show this help message");
+    println!("    --config <file>            Path to fitness.toml (default: ./fitness.toml)");
+    println!("    --report <file>            Write JSON report to file");
+    println!(
+        "    --previous-report <file>   Prior JSON report for trend deltas (alias: --previous)"
+    );
+    println!("    --help                     Show this help message");
 }
 
 /// The command list returned by `commands()` and used by `register()`.
