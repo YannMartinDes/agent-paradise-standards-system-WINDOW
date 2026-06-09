@@ -168,7 +168,7 @@ value = 28
 issue = "#185"
 ```
 
-Every exception REQUIRES an `issue` reference - it MUST be tracked work, not just a silenced warning. The `value` acts as a budget: if the metric climbs above 42, the exception is insufficient and the violation re-surfaces. Exceptions are currently authored by hand in `fitness-exceptions.toml`. An auto-regeneration command (`apss run fitness ratchet`) is planned, not yet implemented; by design it tightens monotonically and will never widen an existing budget.
+Every exception REQUIRES an `issue` reference - it MUST be tracked work, not just a silenced warning. The `value` acts as a budget: if the metric climbs above 42, the exception is insufficient and the violation re-surfaces. Exceptions are currently authored by hand in `fitness-exceptions.toml`. An auto-regeneration command (`apss run architecture-fitness ratchet`) is planned, not yet implemented; by design it tightens monotonically and will never widen an existing budget.
 
 ## 6. CI integration
 

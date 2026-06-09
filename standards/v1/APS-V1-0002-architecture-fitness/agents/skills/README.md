@@ -6,7 +6,7 @@ Skills for AI agents to interact with the architectural fitness governance frame
 
 | Skill | Purpose | Trigger Phrases |
 |-------|---------|-----------------|
-| [`validate-fitness`](./validate-fitness.md) | Run fitness validation and interpret results | "validate fitness", "check architecture", "run fitness functions" |
+| [`validate-fitness`](./validate-fitness.md) | Run fitness validation and interpret results | "validate fitness", "check architecture", "run architecture-fitness functions" |
 | [`interpret-report`](./interpret-report.md) | Read and explain a fitness report | "explain fitness report", "what are the violations", "show system fitness" |
 | [`configure-dimensions`](./configure-dimensions.md) | Set up fitness governance for a project | "configure fitness", "set up architectural governance", "add fitness rules" |
 
@@ -15,7 +15,7 @@ Skills for AI agents to interact with the architectural fitness governance frame
 ```
 configure-dimensions → fitness.toml created
                             ↓
-validate-fitness     → aps run fitness validate .
+validate-fitness     → aps run architecture-fitness validate .
                             ↓
 interpret-report     → read fitness-report.json, explain findings
 ```

@@ -16,7 +16,7 @@ This directory contains examples demonstrating valid usage of APS-V1-0002.
 1. Copy `fitness.toml` to your repository root
 2. Adjust thresholds for your project's standards
 3. Run `aps run topology analyze .` to generate `.topology/` artifacts
-4. Run `aps run fitness validate .` to evaluate rules
+4. Run `aps run architecture-fitness validate .` to evaluate rules
 5. Use `fitness-report.json` as a reference for the output format
 
 ## Adding Examples

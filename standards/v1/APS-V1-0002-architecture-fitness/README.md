@@ -40,7 +40,7 @@ cargo run -p aps-cli --bin apss-dev -- v1 validate repo
 Run the fitness engine itself against a target project:
 
 ```bash
-cargo run -p aps-cli -- run fitness validate <path>
+cargo run -p aps-cli -- run architecture-fitness validate <path>
 ```
 
 Add `--previous-report path/to/prior.json` for trend deltas (or the back-compat alias `--previous`).

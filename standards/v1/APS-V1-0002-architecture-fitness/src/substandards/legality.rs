@@ -37,7 +37,7 @@ impl apss_core::registry::CommandHandler for NoopCommandHandler {
     fn execute(&self, _command: &str, _args: &[String], _config: &toml::Value) -> i32 {
         eprintln!(
             "No composed CLI commands for architecture-fitness-lg01; use the parent \
-             architecture-fitness via `apss run fitness validate`."
+             architecture-fitness via `apss run architecture-fitness validate`."
         );
         5
     }

@@ -43,7 +43,7 @@ Source of truth: `DimensionCode::promotion_status()` in `architecture-fitness/sr
 
 ## Consequences
 
-- Projects using APS-V1-0002 with MT01 or MD01 rules MUST run APS-V1-0001 topology generation before `apss run fitness validate`; otherwise rules fail rather than skip.
+- Projects using APS-V1-0002 with MT01 or MD01 rules MUST run APS-V1-0001 topology generation before `apss run architecture-fitness validate`; otherwise rules fail rather than skip.
 - Incubating dimensions remain advisory. The composite system fitness score reflects only enforced dimensions (originally MT01 + MD01, now including others per ADR 0003) by default per §6.1. Users who want incubating scores in the composite set `include_incubating = true`.
 - Future dimension promotions follow this same pattern: land producer + schema + reference crate + ADR in a single bounded change.
 
