@@ -94,6 +94,7 @@ dependencies = [
  "apss-project-config",
  "apss-v1-0001-code-topology",
  "apss-v1-0002-architecture-fitness",
+ "apss-v1-0003-documentation",
  "clap",
  "regex",
  "serde",
@@ -236,6 +237,22 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "tempfile",
+ "thiserror",
+ "toml",
+ "walkdir",
+]
+
+[[package]]
+name = "apss-v1-0003-documentation"
+version = "0.1.0"
+dependencies = [
+ "apss-core",
+ "glob",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
  "tempfile",
  "thiserror",
  "toml",

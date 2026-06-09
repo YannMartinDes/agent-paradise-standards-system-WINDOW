@@ -377,6 +377,7 @@ fn main() -> ExitCode {
                         let mut collector = apss_core::registry::CollectorRegistry::new();
                         code_topology::register(&mut collector);
                         architecture_fitness::register(&mut collector);
+                        documentation::register(&mut collector);
 
                         let package_dirs: Vec<std::path::PathBuf> =
                             packages.iter().map(|p| p.path.clone()).collect();
@@ -1006,6 +1007,12 @@ fn resolve_standard(slug: &str) -> Option<StandardCliInfo> {
                 version: architecture_fitness::VERSION,
             })
         }
+        "docs" | "doc" | "documentation" | "aps-v1-0003" => Some(StandardCliInfo {
+            id: documentation::ID,
+            slug: "documentation",
+            name: documentation::NAME,
+            version: documentation::VERSION,
+        }),
         _ => None,
     }
 }
@@ -1018,6 +1025,7 @@ fn dispatch_standard_cli(info: &StandardCliInfo, args: &[String], verbose: bool)
     match info.slug {
         "topology" => dispatch_topology(command, cmd_args, verbose),
         "architecture-fitness" => dispatch_architecture_fitness(command, cmd_args, verbose),
+        "documentation" => dispatch_documentation(command, cmd_args, verbose),
         _ => {
             eprintln!("Error: Standard '{}' CLI not implemented", info.slug);
             ExitCode::FAILURE
@@ -1070,6 +1078,30 @@ fn dispatch_architecture_fitness(command: &str, args: &[String], verbose: bool) 
     }
 
     let handler = architecture_fitness::cli::FitnessCommandHandler::new();
+    let code = handler.execute(command, args, &toml::Value::Table(Default::default()));
+    ExitCode::from(code as u8)
+}
+
+/// Dispatch documentation commands through the standard's own command handler.
+///
+/// The doc validate/index logic now lives in the documentation crate behind
+/// `documentation::cli::DocumentationCommandHandler` (APS-V1-0003, ADR-0002,
+/// issue #68). aps-cli delegates here: it sets `APSS_VERBOSE` so the env-driven
+/// verbose flag survives the trait boundary, then converts the handler's `i32`
+/// exit code into an `ExitCode`.
+fn dispatch_documentation(command: &str, args: &[String], verbose: bool) -> ExitCode {
+    use apss_core::registry::CommandHandler;
+
+    if verbose {
+        // SAFETY: aps-cli is single-threaded at this point (clap has parsed
+        // args and we have not spawned any threads), so setting an env var is
+        // safe here.
+        unsafe {
+            std::env::set_var("APSS_VERBOSE", "1");
+        }
+    }
+
+    let handler = documentation::cli::DocumentationCommandHandler::new();
     let code = handler.execute(command, args, &toml::Value::Table(Default::default()));
     ExitCode::from(code as u8)
 }
