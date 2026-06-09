@@ -33,10 +33,16 @@ apss run documentation index [path]          # preview generated index tables (d
 apss run documentation index [path] --write  # write index tables into README.md files
 ```
 
-The `docs` and `doc` slugs are accepted as aliases. Pre-commit hook installation
-is handled by `apss install` (the standard's validation runs from the generated
-hook); dedicated `install`/`uninstall`/`hook` subcommands are planned for a
-follow-up and are not yet implemented.
+In `APSS.yaml` and `apss run`, use the canonical slug `documentation` (it must
+match the standard key in `APSS.yaml`). The `docs` and `doc` spellings are
+accepted only by the development CLI `apss-dev`, not by the composed project
+binary, so `apss run docs ...` fails in a consumer project.
+
+`apss install` installs a pre-commit hook that runs `apss validate` (project
+config and standard-structure validation), not `apss run documentation validate`.
+Run the documentation standard's own validation manually or in CI with
+`apss run documentation validate`. Dedicated `install`/`uninstall`/`hook`
+subcommands are planned for a follow-up and are not yet implemented.
 
 ## Configuration
 

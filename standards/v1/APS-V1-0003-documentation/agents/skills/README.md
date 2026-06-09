@@ -20,7 +20,7 @@ Skip this skill when the user is editing prose only; the hook handles correctnes
 
 ## Commands
 
-Implemented and runnable today (the canonical slug is `documentation`; `docs` and `doc` are accepted aliases):
+Implemented and runnable today. Use the canonical slug `documentation` (it must match the `APSS.yaml` key); `docs` and `doc` are accepted only by the development CLI `apss-dev`, not by the composed project binary:
 
 ```bash
 apss run documentation validate [path]         # Validate structure. Exit 0 only when no errors.
