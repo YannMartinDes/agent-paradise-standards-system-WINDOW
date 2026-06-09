@@ -6,7 +6,7 @@ description: "Normative rules for documentation structure, the doc type registry
 # APS-V1-0003 - Documentation and Context Engineering (Canonical Specification)
 
 **Version**: 0.1.0
-**Status**: Experimental
+**Status**: Active (official; promoted from EXP-V1-0004)
 **Category**: Governance
 
 ---
@@ -69,7 +69,7 @@ This standard plugs into the unified APSS configuration model owned by the meta-
 
 This standard:
 
-1. Registers the slug `docs`.
+1. Registers the canonical slug `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only).
 2. Contributes the schema for the `docs` section of `APSS.yaml` (Section 3 below).
 3. Validates its own section: the parent validator validates the `docs` block and its core sub-blocks (`index`, `context_files`, `readme`, `root_context`, `backlinking`); each substandard validates its own nested key (`adr`, `north-star`, `retrospectives`).
 

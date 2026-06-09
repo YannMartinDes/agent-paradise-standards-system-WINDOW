@@ -490,7 +490,7 @@ The `issue` field is **REQUIRED**. Exceptions without issue references MUST caus
 
 1. **Budget enforcement**: If `value` is specified and the actual metric value exceeds the exception's `value`, the exception is **insufficient** - the violation is reported as unexcepted.
 2. **Stale detection**: If an entity no longer exists in the topology artifacts, or its metric value is now within the rule's threshold, the exception is **stale**. Stale exceptions MUST be reported in the validation output.
-3. **Monotonic decrease**: When regenerating exceptions (via `aps run fitness ratchet`), new `value` entries MUST NOT exceed previous values. The ratchet only tightens.
+3. **Monotonic decrease**: When regenerating exceptions (via the planned, not-yet-implemented `aps run fitness ratchet` command), new `value` entries MUST NOT exceed previous values. The ratchet only tightens.
 
 ---
 
@@ -964,37 +964,46 @@ severity = "warning"
 
 > This section is informative. The CLI is provided by the `aps` tool.
 
+> **Implementation status.** The implemented CLI surface is the single
+> `validate` subcommand with the flags `--config`, `--report`, and
+> `--previous-report` (alias `--previous`). The `ratchet`, `summary`, and
+> `report` subcommands and the `--dimensions` / `--format` flags below are a
+> forward specification: planned, not yet implemented.
+
 ### 11.1 Commands
 
 ```bash
-# Validate all rules
-aps run fitness validate <path>
+# Validate all rules (implemented)
+aps run architecture-fitness validate <path>
 
-# Validate specific dimensions only
+# Write JSON report (implemented)
+aps run architecture-fitness validate . --report fitness-report.json
+
+# Trend deltas against a prior report (implemented)
+aps run architecture-fitness validate . --previous-report prior.json
+
+# PLANNED, not yet implemented: validate specific dimensions only
 aps run fitness validate . --dimensions MT01,MD01
 
-# Write JSON report
-aps run fitness validate . --report fitness-report.json
-
-# Auto-generate exceptions from current violations
+# PLANNED, not yet implemented: auto-generate exceptions from current violations
 aps run fitness ratchet <path>
 
-# Show system-level fitness summary
+# PLANNED, not yet implemented: show system-level fitness summary
 aps run fitness summary <path>
 
-# Show report in specific format
+# PLANNED, not yet implemented: show report in specific format
 aps run fitness report <path> --format human|json
 ```
 
 ### 11.2 Options
 
-| Option | Description |
-|--------|-------------|
-| `--config <path>` | Path to fitness.toml (default: `./fitness.toml`) |
-| `--report <path>` | Write JSON report to file |
-| `--dimensions <list>` | Comma-separated dimension codes to evaluate |
-| `--format <fmt>` | Output format: `human` or `json` (default: `human`) |
-| `--previous-report <path>` | Path to previous report for trend analysis. Resolved relative to the validate target. `--previous` is accepted as a back-compat alias. |
+| Option | Status | Description |
+|--------|--------|-------------|
+| `--config <path>` | implemented | Path to fitness.toml (default: `./fitness.toml`) |
+| `--report <path>` | implemented | Write JSON report to file |
+| `--previous-report <path>` | implemented | Path to previous report for trend analysis. Resolved relative to the validate target. `--previous` is accepted as a back-compat alias. |
+| `--dimensions <list>` | planned, not yet implemented | Comma-separated dimension codes to evaluate |
+| `--format <fmt>` | planned, not yet implemented | Output format: `human` or `json` (default: `human`) |
 
 ---
 

@@ -58,4 +58,4 @@ Every standard with artifacts SHOULD expose:
 ## Related
 
 - [01_spec.md](./01_spec.md) — Full specification
-- [EXP-V1-0001](../../../standards-experimental/v1/EXP-V1-0001-code-topology/) — Example implementation
+- [EXP-V1-0001](../../../../../../standards-experimental/v1/EXP-V1-0001-code-topology/): Example implementation

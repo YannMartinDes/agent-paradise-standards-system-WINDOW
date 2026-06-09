@@ -90,9 +90,7 @@ are enforced.
 All three sections are required (severity `error`). Earlier drafts of
 this substandard treated the third section as a warning; the rewrite
 in this revision treats Mission, Vision, and Position as equal
-pillars, so missing any one is an error. See
-[`docs/proposals/north-star-shape-options.md`](../../../../../../../docs/proposals/north-star-shape-options.md)
-in the repo root for the reasoning behind the choice.
+pillars, so missing any one is an error.
 
 ## 5. Backlinking from root context files (parent rule)
 

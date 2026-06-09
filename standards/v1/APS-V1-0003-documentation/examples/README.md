@@ -7,7 +7,7 @@ description: "Example configuration and compliant project structure for APS-V1-0
 
 ## Example Configuration
 
-Configuration lives in a single root-level `APSS.yaml` owned by the meta-standard (APS-V1-0000.CF01). This standard registers the slug `docs` and contributes the `docs:` section. A minimal `APSS.yaml` for a project adopting the documentation standard:
+Configuration lives in a single root-level `APSS.yaml` owned by the meta-standard (APS-V1-0000.CF01). This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only); it contributes the `docs:` section. A minimal `APSS.yaml` for a project adopting the documentation standard:
 
 ```yaml
 schema: apss.project/v1

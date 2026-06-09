@@ -11,7 +11,7 @@ Martin Ca / Ce / I / A / D package coupling governance over module-level metrics
 
 - [substandard.toml](substandard.toml)
 - [Specification](docs/01_spec.md)
-- [Tests](tests/)
+- Tests: in the parent crate at `standards/v1/APS-V1-0002-architecture-fitness/tests/modularity_integration.rs`.
 - Engine: parent crate at `standards/v1/APS-V1-0002-architecture-fitness/src/lib.rs`. This substandard publishes `DEFAULT_RULES_TOML`; the engine consumes it.
 
 ## Validation

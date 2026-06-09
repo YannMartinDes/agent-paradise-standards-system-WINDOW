@@ -11,7 +11,7 @@ McCabe / SonarSource / Halstead complexity governance over function-level metric
 
 - [substandard.toml](substandard.toml)
 - [Specification](docs/01_spec.md)
-- [Tests](tests/)
+- Tests: in the parent crate at `standards/v1/APS-V1-0002-architecture-fitness/tests/maintainability_integration.rs`.
 - Engine: parent crate at `standards/v1/APS-V1-0002-architecture-fitness/src/lib.rs`. This substandard publishes `DEFAULT_RULES_TOML`; the engine consumes it.
 
 ## Validation

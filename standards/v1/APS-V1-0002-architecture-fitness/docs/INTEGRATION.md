@@ -21,22 +21,27 @@ This guide walks through wiring architectural fitness governance into a Rust pro
                                                                               └──────────────────────┘
 ```
 
-**Separation of concerns:** APS-V1-0001 produces data. APS-V1-0002 asserts on it. The artifacts at `.topology/metrics/` are the contract between them, governed by the schemas in `APS-V1-0001/schemas/`.
+**Separation of concerns:** APS-V1-0001 produces data. APS-V1-0002 asserts on it. The artifacts at `.topology/metrics/` are the contract between them, governed by the `.proto` schemas in `APS-V1-0001-code-topology/proto/`.
 
 ## 1. Prerequisites
 
 - A Rust project (single crate or workspace) using 2021+ edition.
-- `apss` CLI installed. The project's `apss.toml` declares the standards:
+- `apss` CLI installed. The project's `APSS.yaml` declares the standards:
 
-  ```toml
-  [project]
-  name = "my-project"
+  ```yaml
+  schema: apss.project/v1
 
-  [standards.code-topology]
-  version = "1.0.0"
+  project:
+    name: my-project
+    apss_version: v1
 
-  [standards.architecture-fitness]
-  version = "1.0.0"
+  standards:
+    code-topology:
+      id: APS-V1-0001
+      version: ">=1.0.0, <2.0.0"
+    architecture-fitness:
+      id: APS-V1-0002
+      version: ">=1.0.0, <2.0.0"
   ```
 
 Run `apss install` to build the project-local CLI into `.apss/bin/`.
@@ -55,7 +60,7 @@ This writes:
 - `.topology/graphs/coupling-matrix.json` - module-to-module coupling strengths
 - `.topology/manifest.toml` - run metadata
 
-All `*.json` artifacts carry `schema_version: "1.0.0"` and validate against the schemas in `APS-V1-0001/schemas/`.
+All `*.json` artifacts carry `schema_version: "1.0.0"` and conform to the `.proto` schemas in `APS-V1-0001-code-topology/proto/`.
 
 ## 3. Configure fitness rules
 
@@ -163,7 +168,7 @@ value = 28
 issue = "#185"
 ```
 
-Every exception REQUIRES an `issue` reference - it MUST be tracked work, not just a silenced warning. The `value` acts as a budget: if the metric climbs above 42, the exception is insufficient and the violation re-surfaces. Regenerating exceptions tightens monotonically - `apss run fitness ratchet` will never widen an existing budget.
+Every exception REQUIRES an `issue` reference - it MUST be tracked work, not just a silenced warning. The `value` acts as a budget: if the metric climbs above 42, the exception is insufficient and the violation re-surfaces. Exceptions are currently authored by hand in `fitness-exceptions.toml`. An auto-regeneration command (`apss run fitness ratchet`) is planned, not yet implemented; by design it tightens monotonically and will never widen an existing budget.
 
 ## 6. CI integration
 
@@ -314,7 +319,7 @@ The engine still treats `PF01` as `incubating` in `fitness-report.json`'s `promo
 - [Spec §3.5](./01_spec.md) for Artifact Contracts
 - [ADR 0002](./adrs/0002-mt01-md01-promotion.md) for why MT01 and MD01 are active
 - [ADR 0003](./adrs/0003-six-dimension-promotion.md) for why ST01, SC01, LG01, AC01 promoted alongside them
-- [APS-V1-0001 schemas](../../APS-V1-0001-code-topology/schemas/) for upstream artifact contracts
+- [APS-V1-0001 artifact schemas](../../APS-V1-0001-code-topology/proto/) for upstream artifact contracts (the `.proto` definitions for `functions.json`, `modules.json`, `coupling.json`, and the graph/manifest artifacts)
 - [`fitness-config.schema.json`](../schemas/fitness-config.schema.json) for the config contract
 - [`fitness-exceptions.schema.json`](../schemas/fitness-exceptions.schema.json) for the exceptions contract
 - [`fitness-report.schema.json`](../schemas/fitness-report.schema.json) for the report contract

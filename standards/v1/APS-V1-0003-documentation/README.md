@@ -2,7 +2,7 @@
 
 Generic frontmatter-driven index and progressive-disclosure mechanism for any docs directory, plus a pluggable doc-type registry layered on top. The standard is the substrate; the doc types (ADRs, the North Star, Retrospectives) are instances.
 
-This is an experimental standard under APS-V1-0003. The contract surface, doc type registry, and install hook are normative. The validator implementation is split across the parent and its substandards.
+This is an official, active standard under APS-V1-0003 (promoted from EXP-V1-0004). The contract surface, doc type registry, and install hook are normative. The validator implementation is split across the parent and its substandards.
 
 ## Where the contract lives
 
@@ -46,8 +46,8 @@ subcommands are planned for a follow-up and are not yet implemented.
 
 ## Configuration
 
-This standard registers the slug `docs` and contributes the `docs:` section of `APSS.yaml`, owned by the meta-standard (APS-V1-0000.CF01). Zero-config works: absence of a key means the documented default applies (per Section 3.2 of the spec). A key is written only to opt out (`disable: true`) or to override a non-`disable` default.
+This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only). It contributes the `docs:` section of `APSS.yaml`, owned by the meta-standard (APS-V1-0000.CF01). Zero-config works: absence of a key means the documented default applies (per Section 3.2 of the spec). A key is written only to opt out (`disable: true`) or to override a non-`disable` default.
 
 ## Status
 
-Experimental. The contract surface is stable; validator implementations land iteratively per substandard.
+Official and active (APS-V1-0003, promoted from EXP-V1-0004). The contract surface is stable; validator implementations land iteratively per substandard.

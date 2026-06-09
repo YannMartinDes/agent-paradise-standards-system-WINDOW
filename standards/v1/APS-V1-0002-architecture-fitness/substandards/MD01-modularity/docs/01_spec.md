@@ -46,7 +46,7 @@ This substandard governs **module-level coupling and dependency structure** - th
 | Slice Independence Score (SIS) | Slice | How independent a vertical slice is from others |
 | Cross-Context Coupling | Slice | Number of cross-bounded-context dependencies |
 
-See [02_metrics-catalog.md](../../docs/02_metrics-catalog.md) for complete definitions.
+See [02_metrics-catalog.md](../../../docs/02_metrics-catalog.md) for complete definitions.
 
 ## 3. Default Rules
 
