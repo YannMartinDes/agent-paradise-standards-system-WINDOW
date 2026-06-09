@@ -236,22 +236,21 @@ fn main() -> ExitCode {
             list,
         } => {
             if list {
-                // List available standards
+                // Build the list from the registered standards themselves so it
+                // can never drift from register() metadata.
                 println!("Available Standards:\n");
-                println!("  topology (EXP-V1-0001) v0.1.0");
-                println!("    Code Topology - architectural metrics and visualization");
-                println!("    Commands: analyze, validate, diff, report, viz");
-                println!();
-                println!(
-                    "  architecture-fitness ({}) v{}",
-                    architecture_fitness::ID,
-                    architecture_fitness::VERSION
-                );
-                println!(
-                    "    Architecture Fitness Functions - declarative architectural assertions"
-                );
-                println!("    Commands: validate");
-                println!();
+                let mut collector = apss_core::registry::CollectorRegistry::new();
+                code_topology::register(&mut collector);
+                architecture_fitness::register(&mut collector);
+                documentation::register(&mut collector);
+                for (info, _handler) in collector.entries() {
+                    println!("  {} ({}) v{}", info.slug, info.id, info.version);
+                    println!("    {}", info.description);
+                    if !info.commands.is_empty() {
+                        println!("    Commands: {}", info.commands.join(", "));
+                    }
+                    println!();
+                }
                 println!("Use 'apss-dev run <slug> --help' for command details.");
                 return ExitCode::SUCCESS;
             }

@@ -28,7 +28,7 @@ These metrics require class-level analysis not yet available in the topology sta
 | Weighted Methods per Class (WMC) | Class | Σ CC per method | Chidamber & Kemerer (1994) | Planned |
 | Lack of Cohesion in Methods (LCOM) | Class | Henderson-Sellers variant | Henderson-Sellers (1996) | Planned |
 
-See [02_metrics-catalog.md](../../docs/02_metrics-catalog.md) for complete definitions.
+See [02_metrics-catalog.md](../../../docs/02_metrics-catalog.md) for complete definitions.
 
 ### 2.2 Structural Pattern Checks (Active)
 

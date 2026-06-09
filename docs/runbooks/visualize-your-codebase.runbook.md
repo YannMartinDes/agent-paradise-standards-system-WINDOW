@@ -161,7 +161,7 @@ Expected: validation output before the commit completes. Hook failures block the
 ## Related
 
 - Consumer flow overview: root `README.md`, section "Using APSS in Your Project"
-- Distribution model: ADR-0002 (`standards/v1/APS-V1-0000-meta/docs/adrs/0002-crates-io-distribution.md`) and the [DI01 distribution spec](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/01_spec.md)
+- Distribution model: ADR-0002 (`standards/v1/APS-V1-0000-meta/docs/adrs/0002-crates-io-distribution.md`) and the [DI01 distribution spec](../../standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/01_spec.md)
 - Distribution lifecycle: `standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/03_package_manager_lifecycle.md`
 - Release acceptance testing: `docs/testing/apss-package-manual-acceptance-testing.runbook.md`
 - Tracking: #67 (runbooks), #70 (CLI UX); #68 closed by ADR-0002 Phase C (consumer binary runs all commands). ADR-0002 Phase D enables registry install (`apss install` from crates.io with no checkout).

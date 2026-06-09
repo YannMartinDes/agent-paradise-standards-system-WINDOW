@@ -18,7 +18,7 @@ use apss_core::registry::{CommandHandler, CommandInfo};
 use crate::{FitnessReport, FitnessValidator, RuleStatus};
 
 /// Handler that backs `run architecture-fitness <command>` in composed
-/// binaries and `run fitness <command>` in the dev CLI.
+/// binaries and `run architecture-fitness <command>` in the dev CLI.
 pub struct FitnessCommandHandler;
 
 impl FitnessCommandHandler {

@@ -10,7 +10,7 @@
 - [substandard.toml](substandard.toml)
 - [Specification](docs/01_spec.md)
 - [Examples](examples/)
-- [Tests](tests/)
+- Tests: in the parent crate at `standards/v1/APS-V1-0001-code-topology/tests/`.
 - [Agent Skills](agents/skills/)
 
 ## Validation

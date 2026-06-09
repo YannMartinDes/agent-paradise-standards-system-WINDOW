@@ -24,7 +24,7 @@ This substandard governs **function-level and file-level maintainability** - the
 | Lines of Code (LOC/SLOC) | File, Module | Line counts | Brooks (1975), Boehm (1981) |
 | Maintainability Index (MI) | File, Module | MI = 171 - 5.2×ln(V) - 0.23×CC - 16.2×ln(LOC) | Coleman et al. (1994) |
 
-See [02_metrics-catalog.md](../../docs/02_metrics-catalog.md) for complete definitions.
+See [02_metrics-catalog.md](../../../docs/02_metrics-catalog.md) for complete definitions.
 
 ## 3. Default Rules
 

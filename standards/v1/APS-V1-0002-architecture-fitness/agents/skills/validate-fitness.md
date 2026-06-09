@@ -5,7 +5,7 @@ Run architecture fitness validation and report results.
 ## Usage
 
 ```
-User: "validate fitness" | "check architecture" | "run fitness functions"
+User: "validate fitness" | "check architecture" | "run architecture-fitness functions"
 ```
 
 ## Parameters
@@ -24,7 +24,7 @@ The six active dimensions (MT01, MD01, ST01, SC01, LG01, AC01) are evaluated in 
 
 1. Check that `fitness.toml` exists at the target path
 2. Check that `.topology/` directory exists (run `aps run topology analyze .` if missing)
-3. Run `aps run fitness validate <path>` with appropriate options. For trend analysis, pass `--previous-report <file>` (the CLI flag is `--previous-report`, not `--previous`).
+3. Run `aps run architecture-fitness validate <path>` with appropriate options. For trend analysis, pass `--previous-report <file>` (the CLI flag is `--previous-report`, not `--previous`).
 4. Read the output and report:
    - Overall pass/fail status
    - System-level fitness score and threshold

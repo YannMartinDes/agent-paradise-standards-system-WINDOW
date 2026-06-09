@@ -82,8 +82,9 @@ Beyond the substrate and the registry, the parent contributes a small
 amount of project-wide infrastructure:
 
 1. **A single shared config file** at `APSS.yaml`, owned by the
-   meta-standard (APS-V1-0000.CF01). This standard registers the slug
-   `docs` and contributes the `docs:` section schema. Every rule is
+   meta-standard (APS-V1-0000.CF01). This standard's canonical slug is
+   `documentation` (the `docs` and `doc` spellings are dev-CLI aliases
+   only); it contributes the `docs:` section schema. Every rule is
    default on. A project switches one off by setting `disable: true`
    in the smallest scope that contains it. There are no scattered
    per-feature `optional` flags. Absence of a key equals the default
