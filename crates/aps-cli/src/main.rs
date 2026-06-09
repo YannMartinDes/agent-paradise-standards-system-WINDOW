@@ -242,7 +242,11 @@ fn main() -> ExitCode {
                 println!("    Code Topology - architectural metrics and visualization");
                 println!("    Commands: analyze, validate, diff, report, viz");
                 println!();
-                println!("  fitness (EXP-V1-0003) v0.1.0");
+                println!(
+                    "  architecture-fitness ({}) v{}",
+                    architecture_fitness::ID,
+                    architecture_fitness::VERSION
+                );
                 println!(
                     "    Architecture Fitness Functions - declarative architectural assertions"
                 );
@@ -372,7 +376,7 @@ fn main() -> ExitCode {
                         // actually register CLI commands. Silence is never a pass.
                         let mut collector = apss_core::registry::CollectorRegistry::new();
                         code_topology::register(&mut collector);
-                        fitness_functions::register(&mut collector);
+                        architecture_fitness::register(&mut collector);
                         documentation::register(&mut collector);
 
                         let package_dirs: Vec<std::path::PathBuf> =
@@ -995,12 +999,14 @@ fn resolve_standard(slug: &str) -> Option<StandardCliInfo> {
             name: "Code Topology",
             version: "0.1.0",
         }),
-        "fitness" | "fitness-functions" | "exp-v1-0003" => Some(StandardCliInfo {
-            id: "EXP-V1-0003",
-            slug: "fitness",
-            name: "Architecture Fitness Functions",
-            version: "0.1.0",
-        }),
+        "architecture-fitness" | "fitness" | "fitness-functions" | "aps-v1-0002" => {
+            Some(StandardCliInfo {
+                id: architecture_fitness::ID,
+                slug: "architecture-fitness",
+                name: architecture_fitness::NAME,
+                version: architecture_fitness::VERSION,
+            })
+        }
         "docs" | "doc" | "documentation" | "aps-v1-0003" => Some(StandardCliInfo {
             id: documentation::ID,
             slug: "documentation",
@@ -1018,7 +1024,7 @@ fn dispatch_standard_cli(info: &StandardCliInfo, args: &[String], verbose: bool)
 
     match info.slug {
         "topology" => dispatch_topology(command, cmd_args, verbose),
-        "fitness" => dispatch_fitness(command, cmd_args, verbose),
+        "architecture-fitness" => dispatch_architecture_fitness(command, cmd_args, verbose),
         "documentation" => dispatch_documentation(command, cmd_args, verbose),
         _ => {
             eprintln!("Error: Standard '{}' CLI not implemented", info.slug);
@@ -1051,14 +1057,15 @@ fn dispatch_topology(command: &str, args: &[String], verbose: bool) -> ExitCode 
     ExitCode::from(code as u8)
 }
 
-/// Dispatch fitness commands through the standard's own command handler.
+/// Dispatch architecture-fitness commands through the standard's own command
+/// handler.
 ///
-/// The fitness validate logic now lives in the fitness-functions crate behind
-/// `fitness_functions::cli::FitnessCommandHandler` (ADR-0002, issue #68/#69).
-/// aps-cli delegates here: it sets `APSS_VERBOSE` so the env-driven verbose flag
-/// survives the trait boundary, then converts the handler's `i32` exit code into
-/// an `ExitCode`.
-fn dispatch_fitness(command: &str, args: &[String], verbose: bool) -> ExitCode {
+/// The fitness validate logic lives in the architecture-fitness crate behind
+/// `architecture_fitness::cli::FitnessCommandHandler` (APS-V1-0002). aps-cli
+/// delegates here: it sets `APSS_VERBOSE` so the env-driven verbose flag
+/// survives the trait boundary, then converts the handler's `i32` exit code
+/// into an `ExitCode`.
+fn dispatch_architecture_fitness(command: &str, args: &[String], verbose: bool) -> ExitCode {
     use apss_core::registry::CommandHandler;
 
     if verbose {
@@ -1070,7 +1077,7 @@ fn dispatch_fitness(command: &str, args: &[String], verbose: bool) -> ExitCode {
         }
     }
 
-    let handler = fitness_functions::cli::FitnessCommandHandler::new();
+    let handler = architecture_fitness::cli::FitnessCommandHandler::new();
     let code = handler.execute(command, args, &toml::Value::Table(Default::default()));
     ExitCode::from(code as u8)
 }

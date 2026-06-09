@@ -1,0 +1,44 @@
+[package]
+name = "apss-v1-0002-architecture-fitness"
+version = "1.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Architecture Fitness Functions - comprehensive architectural governance framework"
+readme = "README.md"
+keywords = ["fitness", "architecture", "governance", "metrics", "ratchet"]
+categories = ["development-tools"]
+
+[lib]
+name = "architecture_fitness"
+
+# Feature keys are the substandard profile codes (the id suffix after the dot).
+# The cargo feature name equals the substandard code: one source of truth, no
+# lookup table. A parity validator (DI_SUBSTANDARD_FEATURE_MISMATCH) enforces
+# that these keys stay equal to the substandard codes. See ADR-0002 and DI01.
+# All dimension substandards are reference implementations that only use the
+# parent engine plus apss_core/toml, so each feature is empty.
+[features]
+default = ["ST01", "AC01", "AV01", "LG01", "MD01", "MT01", "PF01", "SC01"]
+ST01 = []
+AC01 = []
+AV01 = []
+LG01 = []
+MD01 = []
+MT01 = []
+PF01 = []
+SC01 = []
+
+[dependencies]
+apss-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+glob.workspace = true
+thiserror.workspace = true
+chrono = "0.4"
+
+[dev-dependencies]
+tempfile = "3.14"
+jsonschema.workspace = true
