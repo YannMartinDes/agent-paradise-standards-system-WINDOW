@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:apss:schema:aps-v1-0002:fitness-config:1.0.0",
+  "title": "Fitness Configuration",
+  "description": "Schema for fitness.toml - architectural fitness rules, dimensions, and system-level scoring configuration per APS-V1-0002 §4.",
+  "type": "object",
+  "required": ["config"],
+  "additionalProperties": false,
+  "properties": {
+    "config": { "$ref": "#/$defs/Config" },
+    "dimensions": { "$ref": "#/$defs/Dimensions" },
+    "system_fitness": { "$ref": "#/$defs/SystemFitness" },
+    "rules": { "$ref": "#/$defs/Rules" }
+  },
+  "$defs": {
+    "Config": {
+      "type": "object",
+      "required": ["topology_dir"],
+      "additionalProperties": false,
+      "properties": {
+        "topology_dir": {
+          "type": "string",
+          "description": "Path to the .topology/ directory relative to the repo root."
+        },
+        "exceptions": {
+          "type": "string",
+          "default": "fitness-exceptions.toml",
+          "description": "Path to the exceptions file."
+        },
+        "severity_default": {
+          "type": "string",
+          "enum": ["error", "warning"],
+          "default": "error",
+          "description": "Default severity when a rule does not specify one."
+        }
+      }
+    },
+    "Dimensions": {
+      "type": "object",
+      "description": "Enable/disable flags for each known dimension code, plus an optional `reasons` submap. Keys are restricted to the eight dimension codes defined in APS-V1-0002 (the Rust `DimensionsConfig` deserializer rejects unknown codes; new codes require a spec change).",
+      "additionalProperties": false,
+      "properties": {
+        "MT01": { "type": "boolean" },
+        "MD01": { "type": "boolean" },
+        "ST01": { "type": "boolean" },
+        "SC01": { "type": "boolean" },
+        "LG01": { "type": "boolean" },
+        "AC01": { "type": "boolean" },
+        "PF01": { "type": "boolean" },
+        "AV01": { "type": "boolean" },
+        "reasons": {
+          "type": "object",
+          "description": "When disabling a default-enabled dimension, a reason string is REQUIRED.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "SystemFitness": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "min_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.7,
+          "description": "Minimum composite score. System fails if score < min_score."
+        },
+        "include_incubating": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether incubating dimensions contribute to the composite score. When false, only active dimensions count - the score reflects enforced governance only."
+        },
+        "weights": {
+          "type": "object",
+          "description": "Per-dimension weight. Weights across contributing dimensions MUST sum to 1.0.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "Rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "threshold": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ThresholdRule" }
+        },
+        "dependency": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DependencyRule" }
+        },
+        "structural": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StructuralRule" }
+        }
+      }
+    },
+    "ThresholdRule": {
+      "type": "object",
+      "required": ["id", "name", "source", "field", "scope"],
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["max"] },
+        { "required": ["min"] }
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "dimension": {
+          "type": "string",
+          "enum": ["MT01", "MD01", "ST01", "SC01", "LG01", "AC01", "PF01", "AV01"],
+          "description": "Dimension code this rule belongs to. The engine validates the code at config load (see FitnessError::InvalidDimension). Recommended to set explicitly; engine does not currently infer dimensions from source/field."
+        },
+        "source": {
+          "type": "string",
+          "description": "Path to a topology artifact, relative to config.topology_dir."
+        },
+        "field": {
+          "type": "string",
+          "description": "JSON field path (dot-notation supported: e.g., metrics.martin.ce)."
+        },
+        "max": {
+          "type": "number",
+          "description": "Upper bound. Violation when value > max."
+        },
+        "min": {
+          "type": "number",
+          "description": "Lower bound. Violation when value < min."
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["function", "file", "module", "class", "slice", "system"]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning"]
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "DependencyRule": {
+      "type": "object",
+      "required": ["id", "name", "type", "from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "dimension": {
+          "type": "string",
+          "enum": ["MT01", "MD01", "ST01", "SC01", "LG01", "AC01", "PF01", "AV01"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["forbidden", "allowed", "required"]
+        },
+        "from": { "$ref": "#/$defs/PathMatcher" },
+        "to": { "$ref": "#/$defs/PathMatcher" },
+        "circular": {
+          "type": "boolean",
+          "default": false
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning"]
+        }
+      }
+    },
+    "StructuralRule": {
+      "type": "object",
+      "required": ["id", "name", "pattern"],
+      "additionalProperties": false,
+      "description": "Structural rule. The closed set of fields below matches the Rust `StructuralRule` deserializer; pattern-specific extension fields, once introduced, will be added here in tandem with engine support.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "dimension": {
+          "type": "string",
+          "enum": ["MT01", "MD01", "ST01", "SC01", "LG01", "AC01", "PF01", "AV01"]
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Pattern type from the structural pattern catalog defined in the ST01 substandard."
+        },
+        "from": { "$ref": "#/$defs/PathMatcher" },
+        "to": { "$ref": "#/$defs/PathMatcher" },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning"]
+        }
+      }
+    },
+    "PathMatcher": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Glob pattern matching entity paths."
+        },
+        "path_not": {
+          "type": "string",
+          "description": "Glob pattern excluding entity paths."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "config": {
+        "topology_dir": ".topology",
+        "exceptions": "fitness-exceptions.toml",
+        "severity_default": "error"
+      },
+      "dimensions": {
+        "MT01": true,
+        "MD01": true,
+        "ST01": true,
+        "SC01": true,
+        "LG01": true,
+        "AC01": true,
+        "PF01": false,
+        "AV01": false
+      },
+      "system_fitness": {
+        "enabled": true,
+        "min_score": 0.7,
+        "include_incubating": false,
+        "weights": {
+          "MT01": 0.25,
+          "MD01": 0.25,
+          "ST01": 0.15,
+          "SC01": 0.15,
+          "LG01": 0.10,
+          "AC01": 0.10
+        }
+      },
+      "rules": {
+        "threshold": [
+          {
+            "id": "max-cyclomatic",
+            "name": "Maximum Cyclomatic Complexity",
+            "dimension": "MT01",
+            "source": "metrics/functions.json",
+            "field": "metrics.cyclomatic",
+            "max": 10,
+            "scope": "function",
+            "severity": "error",
+            "exclude": ["**/tests/**"]
+          },
+          {
+            "id": "max-efferent-coupling",
+            "name": "Maximum Efferent Coupling",
+            "dimension": "MD01",
+            "source": "metrics/coupling.json",
+            "field": "efferent_coupling",
+            "max": 20,
+            "scope": "module"
+          }
+        ]
+      }
+    }
+  ]
+}
