@@ -23,13 +23,13 @@ binary that contains only the standards your project declares.
 
 ```bash
 cargo install apss              # install the bootstrap CLI
-apss init --standard code-topology   # declare the standard in APSS.yaml (set id to APS-V1-0001)
+apss init --standard code-topology   # declare the standard in apss.yaml (set id to APS-V1-0001)
 apss install                    # resolve, pin, and build the composed binary
 apss run code-topology analyze .            # analyze the codebase into .topology/
 apss run code-topology viz .topology --type all   # render the visualizations
 ```
 
-Commit `APSS.yaml` and `apss.lock`. The generated `.apss/` runtime is build
+Commit `apss.yaml` and `apss.lock`. The generated `.apss/` runtime is build
 output and stays out of git.
 
 ## Substandards as cargo features

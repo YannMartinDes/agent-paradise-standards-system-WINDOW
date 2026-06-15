@@ -11,7 +11,7 @@ use crate::OutputFormat;
 
 /// Configuration for the Code Topology standard (`APS-V1-0001`).
 ///
-/// Used in `APSS.yaml`:
+/// Used in `apss.yaml`:
 /// ```yaml
 /// standards:
 ///   code-topology:

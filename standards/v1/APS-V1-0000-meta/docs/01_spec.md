@@ -54,7 +54,7 @@ An **experimental standard** is an incubating package used for iteration and com
 
 - Are never considered official
 - Are enforced in downstream repositories only when explicitly declared in
-  `APSS.yaml`
+  `apss.yaml`
 - Follow the same structure as official standards
 - Can be promoted to official after peer review and security audit
 
@@ -401,7 +401,7 @@ pub trait StandardConfig: DeserializeOwned + Serialize + Default {
 
 This trait enables:
 
-- **Type-safe config validation**  -  Consumer `APSS.yaml` config blocks are deserialized into the standard's config type, catching type errors at parse time.
+- **Type-safe config validation**  -  Consumer `apss.yaml` config blocks are deserialized into the standard's config type, catching type errors at parse time.
 - **Semantic validation**  -  The `validate()` method checks value ranges, cross-field consistency, and other constraints beyond what the type system expresses.
 - **Schema generation**  -  `json_schema()` produces a JSON Schema for IDE completion and external tooling.
 - **Scaffolding**  -  `toml_template()` generates documented default config snippets for `apss init`.
@@ -422,7 +422,7 @@ Standards that implement `StandardConfig` SHOULD include a generated `config.sch
 
 - MUST be regenerable from the Rust type via `StandardConfig::json_schema()`
 - SHOULD be kept in sync (CI MAY validate staleness)
-- Enables IDE completion and external tooling for `APSS.yaml`
+- Enables IDE completion and external tooling for `apss.yaml`
 
 #### 8.3.4 Validation Scope
 
@@ -775,11 +775,11 @@ The DI01 substandard specifies:
 
 ### 17.1 Project Configuration
 
-Consumer projects declare which standards they adopt via `APSS.yaml`, defined by `APS-V1-0000.CF01` (Project Configuration substandard).
+Consumer projects declare which standards they adopt via `apss.yaml`, defined by `APS-V1-0000.CF01` (Project Configuration substandard).
 
 The CF01 substandard specifies:
 
-- The `APSS.yaml` schema for declaring standards, versions, and config
+- The `apss.yaml` schema for declaring standards, versions, and config
 - Cascading configuration for monorepos
 - Typed configuration validation via the `StandardConfig` trait (§8.3)
 - Experimental standard declarations and promoted-experiment compatibility

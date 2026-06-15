@@ -12,8 +12,8 @@ From the root of a repo that contains Rust or Python source:
 
 ```bash
 cargo install apss                                  # one-time, needs apss 1.1.0+
-apss init --standard code-topology                  # creates APSS.yaml
-# edit APSS.yaml: set the code-topology id to APS-V1-0001 (see step 2)
+apss init --standard code-topology                  # creates apss.yaml
+# edit apss.yaml: set the code-topology id to APS-V1-0001 (see step 2)
 apss install                                        # resolves the standard from crates.io
 apss run code-topology analyze .                    # writes .topology/ artifacts
 apss run code-topology viz .topology --type all     # opens the dashboard
@@ -23,7 +23,7 @@ That is the whole flow. The sections below explain each step, the expected outpu
 
 ## Audience and Prerequisites
 
-- A target repository containing Rust (`.rs`) or Python (`.py`/`.pyi`) source files. Other languages are not yet supported by the analyzer.
+- A target repository containing Rust (`.rs`), Python (`.py`/`.pyi`), or TypeScript (`.ts`/`.tsx`) source files. JavaScript (`.js`/`.jsx`) is not yet supported by the analyzer.
 - Rust toolchain and Cargo installed (`cargo --version` succeeds).
 - Network access to crates.io. The standard is resolved and built from crates.io; no APSS repository checkout is required. If you are offline or air-gapped, see the appendix at the end.
 
@@ -46,7 +46,7 @@ apss init --standard code-topology
 
 Expected:
 
-- `APSS.yaml` created (user-owned, edit freely) with a `code-topology` standard entry.
+- `apss.yaml` created (user-owned, edit freely) with a `code-topology` standard entry.
 
 The generated entry scaffolds the id as a placeholder:
 
@@ -80,7 +80,10 @@ Expected:
 - A composed binary compiled to `.apss/bin/apss`.
 - `Installed Git hook: .git/hooks/pre-commit` (see step 7).
 
-Commit `APSS.yaml` and `apss.lock`. Do not commit `.apss/`; it is generated output.
+Commit `apss.yaml` and `apss.lock`. Do not commit `.apss/`; it is generated output.
+
+> [!IMPORTANT]
+> Confirm the composed binary at `.apss/bin/apss` exists before relying on topology anywhere. That binary runs the native tree-sitter analyzer, which is fast (topology is ~0.1s on a small repo). If `apss install` has not run, or the binary is missing (`No apss.yaml found` / `Composed binary not found`), the standalone commands below fail outright, and any harness integration that wraps this standard (the architectural fitness gate) **silently falls back to a much slower external collector** (dependency-cruiser): measured at ~136s versus ~0.1s on the same repository. A misconfigured install does not error in the gate; it just gets quietly slow. See the harness-integration note in [adopt-apss-standards.runbook.md](adopt-apss-standards.runbook.md).
 
 ## 4. Validate the Installation
 
@@ -132,7 +135,7 @@ Visualization types: `3d` (force-directed coupling), `codecity` (buildings = mod
 
 ## 7. Git Pre-Commit Hook (Optional but Recommended)
 
-`apss install` already installed a pre-commit hook that runs `apss validate` on every commit. Control it via `APSS.yaml`:
+`apss install` already installed a pre-commit hook that runs `apss validate` on every commit. Control it via `apss.yaml`:
 
 ```yaml
 tool:
@@ -152,8 +155,8 @@ Expected: validation output before the commit completes. Hook failures block the
 
 | Symptom | Cause and Fix |
 |---|---|
-| `No supported source files found` | Target repo has no `.rs`/`.py` files at or below the analyzed path. Point `analyze` at the source root. |
-| `Standard 'topology' not found in APSS.yaml` | The consumer config uses the slug `code-topology`; `topology` is a dev-CLI alias only (issue #70). |
+| `No supported source files found` | Target repo has no `.rs`/`.py`/`.ts`/`.tsx` files at or below the analyzed path. Point `analyze` at the source root. |
+| `Standard 'topology' not found in apss.yaml` | The consumer config uses the slug `code-topology`; `topology` is a dev-CLI alias only (issue #70). |
 | `No modules.json found at ./metrics/modules.json` | `viz` was given the repo root. Pass the `.topology` directory (issue #70). |
 | `apss install` cannot reach crates.io | You are offline or behind a proxy. Use the offline install in the appendix. |
 | `cargo install apss` fails on publish metadata | Update Rust; the workspace requires Rust 1.85+. |

@@ -8,13 +8,13 @@ It ends with a section on integrating APSS into the agentic harness template (le
 
 ## The official standards
 
-| Canonical slug (APSS.yaml key) | ID | Crate | What it enforces |
+| Canonical slug (apss.yaml key) | ID | Crate | What it enforces |
 |---|---|---|---|
 | `code-topology` | APS-V1-0001 | `apss-v1-0001-code-topology` | Architectural metrics, coupling, module structure; produces `.topology/` and visualizations |
 | `architecture-fitness` | APS-V1-0002 | `apss-v1-0002-architecture-fitness` | Declarative fitness rules (threshold, dependency, structural) over topology artifacts |
 | `documentation` | APS-V1-0003 | `apss-v1-0003-documentation` | ADR enforcement, README index validation, agent context files |
 
-Use the canonical slug in `APSS.yaml` and in `apss run <slug>`. The composed project binary dispatches by the exact key in `APSS.yaml`, so `code-topology` works but `topology` does not (short aliases like `topology`, `fitness`, `docs` are accepted only by the development CLI `apss-dev`).
+Use the canonical slug in `apss.yaml` and in `apss run <slug>`. The composed project binary dispatches by the exact key in `apss.yaml`, so `code-topology` works but `topology` does not (short aliases like `topology`, `fitness`, `docs` are accepted only by the development CLI `apss-dev`).
 
 ## Prerequisites
 
@@ -31,10 +31,10 @@ apss --version          # expect 1.1.0 or newer; `cargo install apss --force` to
 
 ## 2. Declare the standards
 
-`apss init` creates `APSS.yaml`. You can scaffold one standard with `--standard <slug>` (it leaves the id as a `APS-V1-XXXX` placeholder to fill in), or write `APSS.yaml` directly. To adopt all three:
+`apss init` creates `apss.yaml`. You can scaffold one standard with `--standard <slug>` (it leaves the id as a `APS-V1-XXXX` placeholder to fill in), or write `apss.yaml` directly. To adopt all three:
 
 ```yaml
-# APSS.yaml
+# apss.yaml
 schema: apss.project/v1
 
 project:
@@ -66,7 +66,7 @@ Expected:
 - A project-local composed binary is built at `.apss/bin/apss`.
 - A managed pre-commit hook is installed at `.git/hooks/pre-commit` (see step 6).
 
-Commit `APSS.yaml` and `apss.lock`. Do not commit `.apss/` (generated build output; it is gitignored by the managed install). Contributors who clone the repo do not need to install the global CLI.
+Commit `apss.yaml` and `apss.lock`. Do not commit `.apss/` (generated build output; it is gitignored by the managed install). Contributors who clone the repo do not need to install the global CLI.
 
 ## 4. Run each standard once
 
@@ -93,7 +93,7 @@ There are two distinct checks. Use both.
 
 ### Layer 1: project validation (auto-installed hook)
 
-The managed pre-commit hook from `apss install` runs `apss validate`, which checks the project configuration and standard installation state (is `APSS.yaml` valid, is `apss.lock` consistent, is the composed binary present). It does NOT run the standards' own rules. Control it with `tool.hooks.pre_commit` in `APSS.yaml`.
+The managed pre-commit hook from `apss install` runs `apss validate`, which checks the project configuration and standard installation state (is `apss.yaml` valid, is `apss.lock` consistent, is the composed binary present). It does NOT run the standards' own rules. Control it with `tool.hooks.pre_commit` in `apss.yaml`.
 
 ### Layer 2: the standards' own rules (you wire this)
 
@@ -130,7 +130,10 @@ jobs:
 
 The harness template manages hooks with lefthook and tasks with just. Wire APSS into both, plus CI.
 
-1. **Add `APSS.yaml`** (step 2) at the template root and commit it with `apss.lock` after a one-time `apss install`.
+> [!CAUTION]
+> The harness fitness gate (`harness/sensors/bin/sensors gate`) calls `apss run code-topology analyze` to produce native topology metrics. If APSS is not installed in the harness repo (no `apss.yaml`, no `apss install`, no composed `.apss/bin/apss`), the gate does **not** fail: it silently falls back to an external dependency-cruiser + ts-morph collector. On a ~95-file TypeScript repo that fallback was measured at ~136s (about 75% of a 183s gate run) versus ~0.1s for the native analyzer. Wire APSS correctly (steps below) and verify `.apss/bin/apss` exists in CI, or the gate stays correct but quietly runs orders of magnitude slower.
+
+1. **Add `apss.yaml`** (step 2) at the template root and commit it with `apss.lock` after a one-time `apss install`.
 
 2. **A `just` recipe** as the single task surface (the template prefers `just <recipe>` over direct tool calls):
 
@@ -168,7 +171,7 @@ Contributors to the harness fork get enforcement for free: `apss.lock` pins exac
 
 | Symptom | Cause and fix |
 |---|---|
-| `Standard '<x>' not found in APSS.yaml` | Use the canonical slug as the `APSS.yaml` key and in `apss run` (`code-topology`, `architecture-fitness`, `documentation`). |
+| `Standard '<x>' not found in apss.yaml` | Use the canonical slug as the `apss.yaml` key and in `apss run` (`code-topology`, `architecture-fitness`, `documentation`). |
 | `apss install` cannot reach crates.io | Offline or proxied network. Use `apss install --bundle-dir <path>` with a locally built bundle. |
 | `fitness.toml not found` | architecture-fitness needs a `fitness.toml` at the repo root (step 5). |
 | fitness rules fail with missing artifacts | Run `apss run code-topology analyze .` first; fitness reads `.topology/`. |

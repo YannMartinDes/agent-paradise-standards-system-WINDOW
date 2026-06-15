@@ -65,7 +65,7 @@ nested config key under `docs` without changing the parent spec.
 | North Star (Mission, Vision, Position) | [`APS-V1-0003.PV01`](../substandards/PV01-purpose-and-vision/docs/01_spec.md) | `docs/north-star.md` | Single document agents read during plan and design to stay aligned with the project's intent. |
 | Retrospectives | [`APS-V1-0003.RT01`](../substandards/RT01-retrospectives/docs/01_spec.md) | `docs/retrospectives/` | Append-only record of what was learned, by period or by milestone. |
 
-Doc types are activated by their `docs.<slug>` key in `APSS.yaml`
+Doc types are activated by their `docs.<slug>` key in `apss.yaml`
 (kebab-case slugs match each substandard's `substandard.toml`). Every
 doc type is default on, switchable off.
 
@@ -81,7 +81,7 @@ shipped inventory.
 Beyond the substrate and the registry, the parent contributes a small
 amount of project-wide infrastructure:
 
-1. **A single shared config file** at `APSS.yaml`, owned by the
+1. **A single shared config file** at `apss.yaml`, owned by the
    meta-standard (APS-V1-0000.CF01). This standard's canonical slug is
    `documentation` (the `docs` and `doc` spellings are dev-CLI aliases
    only); it contributes the `docs:` section schema. Every rule is
@@ -89,7 +89,7 @@ amount of project-wide infrastructure:
    in the smallest scope that contains it. There are no scattered
    per-feature `optional` flags. Absence of a key equals the default
    value: a project that adopts every default writes nothing into
-   `APSS.yaml`, and `disable: false` is the default the validator
+   `apss.yaml`, and `disable: false` is the default the validator
    applies for absence and MUST NOT appear in real configs or examples.
 2. **An installable hook contract.** Installing the standard installs
    a git pre-commit hook that auto-refreshes indexes, runs the
@@ -120,10 +120,10 @@ amount of project-wide infrastructure:
 ## Configuration
 
 All settings live in the `docs:` section of the project's root
-`APSS.yaml` (owned by APS-V1-0000.CF01). Zero-config works; defaults
+`apss.yaml` (owned by APS-V1-0000.CF01). Zero-config works; defaults
 are documented in
 [`01_spec.md` Section 3](01_spec.md#3-configuration). A complete
-example is in [`examples/APSS.yaml`](../examples/APSS.yaml).
+example is in [`examples/apss.yaml`](../examples/apss.yaml).
 
 ## CLI
 

@@ -7,7 +7,7 @@ description: "Example configuration and compliant project structure for APS-V1-0
 
 ## Example Configuration
 
-Configuration lives in a single root-level `APSS.yaml` owned by the meta-standard (APS-V1-0000.CF01). This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only); it contributes the `docs:` section. A minimal `APSS.yaml` for a project adopting the documentation standard:
+Configuration lives in a single root-level `apss.yaml` owned by the meta-standard (APS-V1-0000.CF01). This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only); it contributes the `docs:` section. A minimal `apss.yaml` for a project adopting the documentation standard:
 
 ```yaml
 schema: apss.project/v1
@@ -20,13 +20,13 @@ docs:
       - security
 ```
 
-The full default `docs:` section (every key) is in [`APSS.yaml`](APSS.yaml).
+The full default `docs:` section (every key) is in [`apss.yaml`](apss.yaml).
 
 ## Example Compliant Directory Structure
 
 ```
 my-project/
-├── APSS.yaml                    # APSS configuration (meta-standard owned)
+├── apss.yaml                    # APSS configuration (meta-standard owned)
 ├── docs/
 │   ├── README.md                # Has ## Index auto-generated
 │   ├── AGENTS.md                # Canonical agent context for this directory

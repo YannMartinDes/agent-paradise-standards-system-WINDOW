@@ -1,9 +1,10 @@
-//! Project configuration parsing for `APSS.yaml`.
+//! Project configuration parsing for `apss.yaml`.
 //!
 //! This module provides types and functions for reading consumer project
-//! configuration files. An `APSS.yaml` at the root of a project declares
+//! configuration files. An `apss.yaml` at the root of a project declares
 //! which APS standards the project implements, their version requirements,
-//! and standard-specific configuration.
+//! and standard-specific configuration. The legacy `APSS.yaml` name is still
+//! accepted on read for backwards compatibility.
 //!
 //! See `APS-V1-0000.CF01` for the normative specification.
 
@@ -15,8 +16,16 @@ use thiserror::Error;
 /// Schema identifier for project configuration files.
 pub const PROJECT_SCHEMA: &str = "apss.project/v1";
 
-/// Default config filename.
-pub const CONFIG_FILENAME: &str = "APSS.yaml";
+/// Canonical config filename. Written by `apss init` and preferred on read.
+pub const CONFIG_FILENAME: &str = "apss.yaml";
+
+/// Legacy config filename, accepted on read for backwards compatibility.
+///
+/// Projects created before the lowercase rename shipped `APSS.yaml`. Discovery
+/// prefers [`CONFIG_FILENAME`] and falls back to this so those repos keep
+/// working on case-sensitive filesystems. New files are always written
+/// lowercase.
+pub const LEGACY_CONFIG_FILENAME: &str = "APSS.yaml";
 
 // ============================================================================
 // Error Types
@@ -40,7 +49,7 @@ pub enum ConfigError {
     },
 
     /// Configuration file not found.
-    #[error("no APSS.yaml found (searched from {start_dir})")]
+    #[error("no apss.yaml found (searched from {start_dir})")]
     NotFound { start_dir: PathBuf },
 
     /// Included config file does not exist.
@@ -59,7 +68,7 @@ pub enum ConfigError {
 // Configuration Types
 // ============================================================================
 
-/// Parsed `APSS.yaml` project configuration.
+/// Parsed `apss.yaml` project configuration.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ProjectConfig {
     /// Schema identifier. MUST be `"apss.project/v1"`.
@@ -125,7 +134,7 @@ pub struct StandardEntry {
 /// Workspace configuration for monorepo support.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct WorkspaceConfig {
-    /// Glob patterns for child package directories that may have their own `APSS.yaml`.
+    /// Glob patterns for child package directories that may have their own `apss.yaml`.
     pub members: Vec<String>,
 
     /// Glob patterns to exclude from workspace discovery.
@@ -382,15 +391,30 @@ fn parse_included_config(path: &Path, content: &str) -> Result<toml::Value, Conf
     }
 }
 
-/// Walk up from `start_dir` to find the nearest `APSS.yaml`.
+/// Return the config file in `dir`, preferring the canonical lowercase
+/// [`CONFIG_FILENAME`] and falling back to the legacy
+/// [`LEGACY_CONFIG_FILENAME`] for backwards compatibility.
+fn config_in_dir(dir: &Path) -> Option<PathBuf> {
+    let canonical = dir.join(CONFIG_FILENAME);
+    if canonical.is_file() {
+        return Some(canonical);
+    }
+    let legacy = dir.join(LEGACY_CONFIG_FILENAME);
+    if legacy.is_file() {
+        return Some(legacy);
+    }
+    None
+}
+
+/// Walk up from `start_dir` to find the nearest `apss.yaml`.
 ///
 /// Returns the path to the found config file, or `None` if no config
-/// file is found before reaching the filesystem root.
+/// file is found before reaching the filesystem root. The legacy
+/// `APSS.yaml` name is accepted as a fallback.
 pub fn find_project_config(start_dir: &Path) -> Option<PathBuf> {
     let mut current = start_dir.to_path_buf();
     loop {
-        let candidate = current.join(CONFIG_FILENAME);
-        if candidate.is_file() {
+        if let Some(candidate) = config_in_dir(&current) {
             return Some(candidate);
         }
         if !current.pop() {
@@ -399,17 +423,17 @@ pub fn find_project_config(start_dir: &Path) -> Option<PathBuf> {
     }
 }
 
-/// Walk up from `start_dir` to find the workspace root `APSS.yaml`.
+/// Walk up from `start_dir` to find the workspace root `apss.yaml`.
 ///
-/// The workspace root is the first `APSS.yaml` that contains a `workspace`
-/// section. If no workspace root is found, returns the nearest `APSS.yaml`.
+/// The workspace root is the first `apss.yaml` that contains a `workspace`
+/// section. If no workspace root is found, returns the nearest `apss.yaml`.
+/// The legacy `APSS.yaml` name is accepted as a fallback.
 pub fn find_workspace_root(start_dir: &Path) -> Option<PathBuf> {
     let mut nearest: Option<PathBuf> = None;
     let mut current = start_dir.to_path_buf();
 
     loop {
-        let candidate = current.join(CONFIG_FILENAME);
-        if candidate.is_file() {
+        if let Some(candidate) = config_in_dir(&current) {
             if nearest.is_none() {
                 nearest = Some(candidate.clone());
             }
@@ -431,6 +455,36 @@ pub fn find_workspace_root(start_dir: &Path) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_find_project_config_prefers_canonical_lowercase() {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temp.path().join(CONFIG_FILENAME),
+            "schema: apss.project/v1\n",
+        )
+        .unwrap();
+        let found = find_project_config(temp.path()).unwrap();
+        assert_eq!(found.file_name().unwrap(), CONFIG_FILENAME);
+    }
+
+    #[test]
+    fn test_find_project_config_falls_back_to_legacy_name() {
+        let temp = tempfile::tempdir().unwrap();
+        // Only the legacy capitalized name exists.
+        std::fs::write(
+            temp.path().join(LEGACY_CONFIG_FILENAME),
+            "schema: apss.project/v1\n",
+        )
+        .unwrap();
+        let found =
+            find_project_config(temp.path()).expect("legacy APSS.yaml should still be discovered");
+        // On case-insensitive filesystems the canonical lookup matches the
+        // legacy file; on case-sensitive ones the explicit fallback does. Either
+        // way a config must be found.
+        let name = found.file_name().unwrap().to_string_lossy().to_lowercase();
+        assert_eq!(name, "apss.yaml");
+    }
 
     #[test]
     fn test_parse_minimal_config() {

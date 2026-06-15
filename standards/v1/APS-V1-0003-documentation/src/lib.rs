@@ -27,7 +27,7 @@ use std::path::{Path, PathBuf};
 pub const ID: &str = "APS-V1-0003";
 /// CLI slug used in `aps run <slug>` and as the matching key for dispatch.
 /// Must equal the `slug` in standard.toml: the composed consumer runner matches
-/// this registered slug against the APSS.yaml standard key.
+/// this registered slug against the apss.yaml standard key.
 pub const SLUG: &str = "documentation";
 /// Human-readable standard name.
 pub const NAME: &str = "Documentation and Context Engineering";

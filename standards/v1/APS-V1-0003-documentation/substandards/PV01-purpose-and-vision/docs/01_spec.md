@@ -43,7 +43,7 @@ root are also rejected (`PV01-location-out-of-tree`).
 
 Diagnostic: `PV01-document-missing` (error). Hint: "Create the file at
 `<resolved-location>` or set `docs.north-star.disable = true` in
-`APSS.yaml`."
+`apss.yaml`."
 
 ## 3. Frontmatter (PV01-frontmatter-missing, PV01-frontmatter-field-missing)
 

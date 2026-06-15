@@ -23,11 +23,11 @@ section, with validation delegated to each standard's own validator.
 
 Concretely, CF01 defines:
 
-- The `APSS.yaml` manifest at the project root, its schema identifier, and its
+- The `apss.yaml` manifest at the project root, its schema identifier, and its
   top-level structure.
 - The core sections owned by CF01: project identity, the standards list, the
   workspace declaration, and the tool block.
-- Cascading rules for nested `APSS.yaml` files in monorepos.
+- Cascading rules for nested `apss.yaml` files in monorepos.
 - A slug registry that every standard in the ecosystem registers into, and the
   meta-validation rules over that registry (Section 3, owned by the registry
   work block).
@@ -54,11 +54,11 @@ and it is the file the installer reads to materialize that intent on disk.
 
 ---
 
-## 2. The `APSS.yaml` Manifest
+## 2. The `apss.yaml` Manifest
 
 ### 2.1 Filename and Location
 
-A consumer project MUST place its configuration at `APSS.yaml` in the project
+A consumer project MUST place its configuration at `apss.yaml` in the project
 root.
 
 - The file MUST be valid YAML as parsed by the Rust `serde_yaml` crate.
@@ -67,7 +67,7 @@ root.
   the project's version control root (`git rev-parse --show-toplevel`) or,
   when no VCS root is available, the directory in which the operator invokes
   the bootstrap CLI.
-- A project MAY add nested `APSS.yaml` files inside workspace members. Their
+- A project MAY add nested `apss.yaml` files inside workspace members. Their
   semantics are defined in Section 4.
 
 The `.apss/` dot directory is reserved for GENERATED artifacts (resolved
@@ -159,7 +159,7 @@ Field rules:
   same standard ID MUST be rejected as `CF_DUPLICATE_STANDARD_ID`.
 - An `EXP-V1-\d{4}` entry explicitly opts the project into enforcing an
   experimental standard. Experiments MUST NOT be installed, validated, or
-  enforced unless they are declared in `APSS.yaml`.
+  enforced unless they are declared in `apss.yaml`.
 - `enabled: false` keeps the entry in the manifest but disables the standard
   for this project. The unified installer (Section 8) MUST uninstall the
   standard's artifacts cleanly when this flag flips to false.
@@ -185,10 +185,10 @@ workspace:
 
 Rules:
 
-- `workspace` MUST NOT appear in a child `APSS.yaml`. A manifest with
+- `workspace` MUST NOT appear in a child `apss.yaml`. A manifest with
   `workspace` is by definition a root manifest.
 - `members` patterns MUST resolve to directories that contain an
-  `APSS.yaml`. A pattern that matches no directory MUST raise
+  `apss.yaml`. A pattern that matches no directory MUST raise
   `CF_EMPTY_WORKSPACE_GLOB` as a warning.
 
 ### 2.7 Standard Sections (slug keys)
@@ -199,7 +199,7 @@ and hands it to the standard's validator (Section 6).
 
 Default-on philosophy:
 
-- An active standard requires NO section in `APSS.yaml`. Defaults from the
+- An active standard requires NO section in `apss.yaml`. Defaults from the
   standard's contributed schema apply.
 - A section exists only to OVERRIDE a default or to DISABLE a feature.
 - The `disable: false` flag is the convention for opt-out, both at the top of
@@ -265,13 +265,13 @@ rules that enforce uniqueness and completeness across `standards/` and
 To resolve the active configuration for a given working directory, tooling
 MUST:
 
-1. Walk upward from the working directory looking for an `APSS.yaml`
+1. Walk upward from the working directory looking for an `apss.yaml`
    containing a `workspace` key. The first such file is the **root
    manifest**.
-2. While walking, every `APSS.yaml` without a `workspace` key encountered
+2. While walking, every `apss.yaml` without a `workspace` key encountered
    between the working directory and the root manifest is a **child
    manifest**, in deepest-to-shallowest order.
-3. If no manifest with a `workspace` key is found, the closest `APSS.yaml`
+3. If no manifest with a `workspace` key is found, the closest `apss.yaml`
    to the working directory is the root manifest and there are no child
    manifests.
 
@@ -365,11 +365,11 @@ disable-inheritance matrix, and worked examples live in the sibling spec
 ## 8. Manifest-Driven Installation (Summary)
 
 The operator-approved Addendum 1 of the unified-config brief makes
-configuration, distribution, and installation a single system. `APSS.yaml`
+configuration, distribution, and installation a single system. `apss.yaml`
 is the manifest, the unified installer is the glue, and each active
 standard ships an install contract that the installer invokes.
 
-The npm-style model is the binding analogy: `APSS.yaml` is to APSS what
+The npm-style model is the binding analogy: `apss.yaml` is to APSS what
 `package.json` is to npm. The `standards` map (Section 2.5) is the
 dependency declaration; one install command reads the manifest, resolves
 versions via DI01, then drives each per-standard install contract; removing
@@ -417,7 +417,7 @@ DI01 MUST treat the promotion as a compatibility alias:
 5. The project continues to validate using the promoted standard without a
    manual manifest edit.
 
-The warning SHOULD recommend updating `APSS.yaml` from the experimental ID to
+The warning SHOULD recommend updating `apss.yaml` from the experimental ID to
 the official ID. It MUST NOT silently rewrite operator-owned configuration
 without an explicit command or flag.
 
@@ -432,7 +432,7 @@ instead of silently dropping enforcement.
 ## 9. Migration from legacy split configuration
 
 The prior project model used `apss.toml` for activation and allowed some
-per-standard configuration under `.apss/config.toml`. CF01 keeps `APSS.yaml`
+per-standard configuration under `.apss/config.toml`. CF01 keeps `apss.yaml`
 as the user-owned manifest and forbids user-authored configuration under
 `.apss/`.
 
@@ -440,7 +440,7 @@ as the user-owned manifest and forbids user-authored configuration under
 
 | Concern | Before | After |
 |---------|--------|-------|
-| File location | `apss.toml` and `.apss/config.toml` | `APSS.yaml` |
+| File location | `apss.toml` and `.apss/config.toml` | `apss.yaml` |
 | Serialisation | TOML | YAML |
 | Schema identifier | `apss.project/v1` | `apss.project/v1` |
 | Configuration in `.apss/` | Allowed (EXP-V1-0004) | Forbidden, dotdir is for generated artifacts only |
@@ -481,7 +481,7 @@ tool:
     pre_commit: true
 ```
 
-Every previously valid `apss.toml` activation field moves into `APSS.yaml`;
+Every previously valid `apss.toml` activation field moves into `apss.yaml`;
 only configuration stored under `.apss/` moves into the manifest.
 
 ### 9.2.1 Tool hook settings
@@ -501,11 +501,11 @@ another way.
 
 Tooling MUST behave as follows during the transition window:
 
-- If `APSS.yaml` exists: load it normally.
+- If `apss.yaml` exists: load it normally.
 - If only `.apss/config.toml` exists: emit `CF_LEGACY_APSS_CONFIG_TOML` at
   error severity with the same hint. Tooling MUST NOT read configuration
   from `.apss/`.
-- If both `APSS.yaml` and `.apss/config.toml` exist: load `APSS.yaml` and
+- If both `apss.yaml` and `.apss/config.toml` exist: load `apss.yaml` and
   emit `CF_LEGACY_APSS_CONFIG_TOML` for the generated-directory config.
 - A future major version of APSS MAY remove the legacy diagnostics and
   refuse to start when a legacy file is present. The diagnostics are the
@@ -515,10 +515,10 @@ Tooling MUST behave as follows during the transition window:
 
 The recommended manual conversion is:
 
-1. Keep `APSS.yaml` as the project manifest.
+1. Keep `apss.yaml` as the project manifest.
 2. Keep or set `schema: apss.project/v1`.
 3. Move keys from `.apss/config.toml` into the appropriate
-   `standards.<slug>.config` mapping in `APSS.yaml`.
+   `standards.<slug>.config` mapping in `apss.yaml`.
 4. Delete `.apss/config.toml`.
 5. Re-run the unified installer to refresh `apss.lock` and the composed
    binary.
@@ -528,7 +528,7 @@ a fast-follow; the converter is out of scope for this spec.
 
 ### 9.5 Spec-internal compatibility
 
-The authoritative project configuration file for this PR is `APSS.yaml`.
+The authoritative project configuration file for this PR is `apss.yaml`.
 
 ---
 

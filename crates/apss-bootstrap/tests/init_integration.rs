@@ -19,8 +19,8 @@ fn test_init_creates_expected_layout() {
         .expect("failed to invoke apss init");
     assert!(status.success(), "apss init exited non-zero: {status}");
 
-    // APSS.yaml exists and contains expected fields
-    let apss_yaml = std::fs::read_to_string(temp.path().join("APSS.yaml")).unwrap();
+    // apss.yaml exists and contains expected fields
+    let apss_yaml = std::fs::read_to_string(temp.path().join("apss.yaml")).unwrap();
     assert!(
         apss_yaml.contains("schema: apss.project/v1"),
         "missing schema line:\n{apss_yaml}"
@@ -89,7 +89,7 @@ fn test_init_with_standard_flag() {
         .expect("failed to invoke apss init --standard");
     assert!(status.success(), "apss init exited non-zero: {status}");
 
-    let apss_yaml = std::fs::read_to_string(temp.path().join("APSS.yaml")).unwrap();
+    let apss_yaml = std::fs::read_to_string(temp.path().join("apss.yaml")).unwrap();
     assert!(
         apss_yaml.contains("  code-topology:"),
         "missing standards.code-topology section:\n{apss_yaml}"

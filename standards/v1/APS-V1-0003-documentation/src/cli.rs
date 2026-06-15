@@ -60,7 +60,7 @@ impl CommandHandler for DocumentationCommandHandler {
 ///
 /// Mirrors [`crate::config::load_config`] but works against an arbitrary path
 /// so operators can point `aps run docs validate` at a non-default
-/// `APSS.yaml`. YAML format per the unified-config brief (2026-06-04); other
+/// `apss.yaml`. YAML format per the unified-config brief (2026-06-04); other
 /// top-level sections owned by other standards are tolerated and ignored.
 fn load_docs_config(path: &str) -> Result<ApssConfig, ConfigError> {
     let path_buf = std::path::PathBuf::from(path);
@@ -304,7 +304,7 @@ fn index(args: &[String], repo_root: &std::path::Path, _verbose: bool) -> i32 {
                         "Docs root not found or contains no directories under {}.",
                         target.display(),
                     );
-                    println!("Create the docs root or configure docs.root in APSS.yaml.");
+                    println!("Create the docs root or configure docs.root in apss.yaml.");
                 } else {
                     for idx in &indexes {
                         println!("--- {} ---", idx.dir.display());
@@ -335,7 +335,7 @@ fn print_help() {
     println!("    index [path]       Generate or check README indexes from front matter");
     println!();
     println!("OPTIONS:");
-    println!("    --config <file>    Path to APSS.yaml (default: <path>/APSS.yaml)");
+    println!("    --config <file>    Path to apss.yaml (default: <path>/apss.yaml)");
     println!("    --write            Write generated indexes into README.md files (index only)");
     println!("    --json             Output validation results as JSON (validate only)");
     println!("    --help             Show this help message");

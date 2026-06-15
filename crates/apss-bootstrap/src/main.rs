@@ -40,7 +40,7 @@ enum Commands {
 
     /// Validate project configuration
     Validate {
-        /// Only validate APSS.yaml structure (skip standard-specific validation)
+        /// Only validate apss.yaml structure (skip standard-specific validation)
         #[arg(long)]
         config_only: bool,
     },
@@ -61,7 +61,7 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum ConfigAction {
-    /// Generate APSS.yaml with all defaults and comments
+    /// Generate apss.yaml with all defaults and comments
     Template,
 }
 
@@ -94,7 +94,7 @@ fn cmd_status() -> i32 {
     let config_path = match find_config() {
         Some(p) => p,
         None => {
-            eprintln!("No APSS.yaml found. Run 'apss init' to create one.");
+            eprintln!("No apss.yaml found. Run 'apss init' to create one.");
             return 1;
         }
     };
@@ -102,7 +102,7 @@ fn cmd_status() -> i32 {
     let config = match apss_core::config::parse_project_config(&config_path) {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("Failed to load APSS.yaml: {e}");
+            eprintln!("Failed to load apss.yaml: {e}");
             return 1;
         }
     };
@@ -161,7 +161,7 @@ fn cmd_validate(config_only: bool) -> i32 {
     let config_path = match find_config() {
         Some(p) => p,
         None => {
-            eprintln!("No APSS.yaml found. Run 'apss init' to create one.");
+            eprintln!("No apss.yaml found. Run 'apss init' to create one.");
             return 1;
         }
     };
@@ -184,7 +184,7 @@ fn cmd_run(args: &[String]) -> i32 {
     let config_path = match find_config() {
         Some(p) => p,
         None => {
-            eprintln!("No APSS.yaml found. Run 'apss init' to create one.");
+            eprintln!("No apss.yaml found. Run 'apss init' to create one.");
             return 1;
         }
     };
@@ -192,7 +192,7 @@ fn cmd_run(args: &[String]) -> i32 {
     let config = match apss_core::config::parse_project_config(&config_path) {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("Failed to load APSS.yaml: {e}");
+            eprintln!("Failed to load apss.yaml: {e}");
             return 1;
         }
     };
@@ -228,7 +228,7 @@ fn cmd_run(args: &[String]) -> i32 {
 
 fn cmd_config_template() -> i32 {
     println!(
-        r#"# APSS.yaml - APSS Project Configuration
+        r#"# apss.yaml - APSS Project Configuration
 # See: https://github.com/AgentParadise/agent-paradise-standards-system
 
 schema: apss.project/v1
