@@ -26,7 +26,7 @@ This guide walks through wiring architectural fitness governance into a Rust pro
 ## 1. Prerequisites
 
 - A Rust project (single crate or workspace) using 2021+ edition.
-- `apss` CLI installed. The project's `APSS.yaml` declares the standards:
+- `apss` CLI installed. The project's `apss.yaml` declares the standards:
 
   ```yaml
   schema: apss.project/v1

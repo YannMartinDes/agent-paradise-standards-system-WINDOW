@@ -64,7 +64,7 @@ Expected result:
 
 ## 4. Prepare Example Repo Manifest
 
-In `/Users/neural/Code/AgentParadise/apss-example-repo`, ensure the project manifest is named `APSS.yaml` and contains a Code Topology standard entry:
+In `/Users/neural/Code/AgentParadise/apss-example-repo`, ensure the project manifest is named `apss.yaml` and contains a Code Topology standard entry:
 
 ```yaml
 schema: apss.project/v1
@@ -85,7 +85,7 @@ standards:
     version: "0.1.0"
 ```
 
-If the repo still has an old `apss.toml`, rename it to `APSS.yaml` and convert the content to YAML before continuing.
+If the repo still has an old `apss.toml`, rename it to `apss.yaml` and convert the content to YAML before continuing.
 
 ## 5. Install Into Example Repo (Registry Path, Primary)
 
@@ -168,7 +168,7 @@ Use a temporary copy so the example repo is not changed:
 ```bash
 rm -rf /tmp/apss-example-hooks-off
 cp -a /Users/neural/Code/AgentParadise/apss-example-repo /tmp/apss-example-hooks-off
-perl -0pi -e 's/pre_commit: true/pre_commit: false/' /tmp/apss-example-hooks-off/APSS.yaml
+perl -0pi -e 's/pre_commit: true/pre_commit: false/' /tmp/apss-example-hooks-off/apss.yaml
 cd /tmp/apss-example-hooks-off
 apss install 2>&1 | tee /tmp/apss-hooks-off.log
 rg "Warning: APSS pre-commit hook installation is disabled" /tmp/apss-hooks-off.log
@@ -189,12 +189,12 @@ mkdir /tmp/apss-fresh-init
 cd /tmp/apss-fresh-init
 git init -q
 apss init --standard code-topology@0.1.0
-sed -n '1,160p' APSS.yaml
+sed -n '1,160p' apss.yaml
 ```
 
 Expected result:
 
-- `APSS.yaml` is created.
+- `apss.yaml` is created.
 - The manifest includes `tool.hooks.pre_commit: true`.
 - The generated standard entry includes a placeholder `APS-V1-XXXX` ID and the requested version.
 

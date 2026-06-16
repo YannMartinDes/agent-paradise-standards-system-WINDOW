@@ -135,7 +135,7 @@ fn generate_cargo_toml(
                     standard: standard.id.clone(),
                 })?;
             let ident = standard_crate_ident(&standard.crate_name);
-            // Substandard selection (APSS.yaml `substandards`) maps to cargo
+            // Substandard selection (apss.yaml `substandards`) maps to cargo
             // features of the parent standard crate (ADR-0002 / DI01: substandards
             // ship as feature modules, not separate crates). None means "all
             // substandards", which is cargo's default feature set, so we emit no

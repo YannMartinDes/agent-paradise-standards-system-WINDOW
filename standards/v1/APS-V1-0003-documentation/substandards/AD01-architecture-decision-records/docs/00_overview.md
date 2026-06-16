@@ -91,7 +91,7 @@ decisions.
 ## File naming convention
 
 The default naming pattern is `ADR-\d{3,5}-[a-zA-Z0-9-]+\.md`, configurable
-via `docs.adr.naming_pattern` in `APSS.yaml`. The canonical guidance prefers
+via `docs.adr.naming_pattern` in `apss.yaml`. The canonical guidance prefers
 present-tense imperative verb phrases in the name, lowercase, dashes for
 word separation, and the `.md` extension. Examples:
 
@@ -136,7 +136,7 @@ and have well-formed frontmatter.
 # Validate ADRs (runs as part of docs validate)
 aps run docs validate .
 
-# Configure required ADR keywords in APSS.yaml at the repo root
+# Configure required ADR keywords in apss.yaml at the repo root
 # (config is owned by APS-V1-0000.CF01; the docs standard contributes the docs: block)
 docs:
   adr:

@@ -18,7 +18,7 @@ RFC 2119 keywords apply.
 
 Substandards MUST be configured as nested keys under the parent
 standard's slug. Substandards MUST NOT receive a top-level slug in
-APSS.yaml.
+apss.yaml.
 
 ```yaml
 docs:
@@ -69,7 +69,7 @@ can evaluate it.
 ### 2.2 Why Nested Wins
 
 - **Grouping is correct.** Substandards are scoped to their parent in
-  the meta-standard (APS-V1-0000 §4.2). Nesting in APSS.yaml matches
+  the meta-standard (APS-V1-0000 §4.2). Nesting in apss.yaml matches
   that hierarchy without lossy flattening.
 - **Disable inheritance is natural.** `disable: true` at the parent
   slug means the parent and all its substandards are off. The
@@ -86,7 +86,7 @@ can evaluate it.
   preserves operator muscle memory across the migration.
 
 The single small cost is that a substandard cannot be configured
-without naming its parent. That cost is paid in APSS.yaml only, where
+without naming its parent. That cost is paid in apss.yaml only, where
 it actually helps the reader.
 
 ---
@@ -140,7 +140,7 @@ If a standard's contribution schema declares a property with the
 same name as one of its substandard slugs, the meta-validator MUST
 emit `CF_SUBSTANDARD_KEY_SHADOW`. This is a build-time error caught
 during `<bootstrap> v1 validate repo`, not a runtime error against
-APSS.yaml. Standards are responsible for avoiding the clash; the
+apss.yaml. Standards are responsible for avoiding the clash; the
 slug registry produces the canonical list of substandard slugs
 each standard owns.
 
@@ -148,7 +148,7 @@ each standard owns.
 |------|----------|------|
 | `CF_SUBSTANDARD_KEY_SHADOW` | Error | Standard contribution schema declares a property with the same name as a substandard slug. |
 
-This rule exists so that consumers can read APSS.yaml without ever
+This rule exists so that consumers can read apss.yaml without ever
 having to disambiguate "is this a leaf property or a substandard?".
 
 ---

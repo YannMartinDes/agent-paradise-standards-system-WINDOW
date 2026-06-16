@@ -15,7 +15,7 @@ description: "Normative rules for documentation structure, the doc type registry
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119).
 
-When this standard says a rule is "default-on, switchable-off", it means the rule is part of the standard, applied unconditionally unless a specific `disable` flag in `APSS.yaml` turns it off for that one project. Defaults are opinionated. Configuration is by exception, not by accumulation of optional flags.
+When this standard says a rule is "default-on, switchable-off", it means the rule is part of the standard, applied unconditionally unless a specific `disable` flag in `apss.yaml` turns it off for that one project. Defaults are opinionated. Configuration is by exception, not by accumulation of optional flags.
 
 ---
 
@@ -47,7 +47,7 @@ The unlocks layered on top of the generic mechanism are:
    to operate on docs as data.
 2. **A configurable, growing doc type registry (Section 8).** Doc
    types are default on; a project disables one by flipping a single
-   flag in `APSS.yaml`.
+   flag in `apss.yaml`.
 3. **Installable enforcement (Section 9).** Installing the standard
    installs a git pre-commit hook that auto-updates the doc index,
    validates structure against the config, and fails the commit when
@@ -65,17 +65,17 @@ Section 8.
 
 ### 1.1 Relationship to APS-V1-0000 and the unified APSS config
 
-This standard plugs into the unified APSS configuration model owned by the meta-standard APS-V1-0000 (via its CF01 substandard). Project-level configuration for every APSS standard lives in a single file at the repository root, `APSS.yaml`, whose top-level structure and slug registry are owned by CF01. Each standard registers a unique short slug and contributes a config-section schema; the meta-validator aggregates and delegates validation of each namespaced section to its owner.
+This standard plugs into the unified APSS configuration model owned by the meta-standard APS-V1-0000 (via its CF01 substandard). Project-level configuration for every APSS standard lives in a single file at the repository root, `apss.yaml`, whose top-level structure and slug registry are owned by CF01. Each standard registers a unique short slug and contributes a config-section schema; the meta-validator aggregates and delegates validation of each namespaced section to its owner.
 
 This standard:
 
 1. Registers the canonical slug `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only).
-2. Contributes the schema for the `docs` section of `APSS.yaml` (Section 3 below).
+2. Contributes the schema for the `docs` section of `apss.yaml` (Section 3 below).
 3. Validates its own section: the parent validator validates the `docs` block and its core sub-blocks (`index`, `context_files`, `readme`, `root_context`, `backlinking`); each substandard validates its own nested key (`adr`, `north-star`, `retrospectives`).
 
 Substandards do NOT register their own top-level slugs. They nest under the `docs` key as namespaced sub-sections (`docs.adr`, `docs.north-star`, `docs.retrospectives`); the nesting convention is normative and is owned by the meta-standard.
 
-The `.apss/` dotdir, when it exists, holds GENERATED artifacts (such as cached indexes and validator state) only. It MUST NOT hold configuration. Earlier drafts of this standard placed configuration in the `.apss` tree; that layout is superseded by `APSS.yaml` at the repository root. Tooling MUST NOT continue to read legacy `.apss` project configuration.
+The `.apss/` dotdir, when it exists, holds GENERATED artifacts (such as cached indexes and validator state) only. It MUST NOT hold configuration. Earlier drafts of this standard placed configuration in the `.apss` tree; that layout is superseded by `apss.yaml` at the repository root. Tooling MUST NOT continue to read legacy `.apss` project configuration.
 
 This standard complements APS-V1-0000's requirement for a per-package `docs/01_spec.md` by enforcing broader documentation structure across the project's docs root, beyond each standard package's own spec file.
 
@@ -88,7 +88,7 @@ This standard complements APS-V1-0000's requirement for a per-package `docs/01_s
 - **Context file**: `CLAUDE.md` or `AGENTS.md`, one per directory, providing AI agents with lightweight orientation to that directory.
 - **Docs root**: The project's technical documentation directory. Default `docs/`, configurable via `docs.root`.
 - **Doc type**: A class of document with its own structure rules (ADR, North Star, Retrospective, ...). Each doc type is implemented as a substandard.
-- **Doc type registry**: The set of `docs.<type>` keys in `APSS.yaml` that declare which doc types are active in a given project. See Section 8.
+- **Doc type registry**: The set of `docs.<type>` keys in `apss.yaml` that declare which doc types are active in a given project. See Section 8.
 - **Backlink**: A reference from an implementation file to the governing doc (ADR, North Star, ...) that it implements. Backlinking is part of every doc type, not a per type opt in. See Section 7.
 
 ---
@@ -97,16 +97,16 @@ This standard complements APS-V1-0000's requirement for a per-package `docs/01_s
 
 ### 3.1 Config Location
 
-Project-level configuration MUST be located at `APSS.yaml` relative to the repository root. The file is owned by the meta-standard (APS-V1-0000.CF01); this standard registers and contributes the `docs` section.
+Project-level configuration MUST be located at `apss.yaml` relative to the repository root. The file is owned by the meta-standard (APS-V1-0000.CF01); this standard registers and contributes the `docs` section.
 
 Configuration MUST NOT be placed under `.apss/`. The `.apss/` dotdir is reserved for GENERATED artifacts (cached indexes, validator state) only.
 
-Monorepo cascade: a nested `APSS.yaml` inside a sub-package layers over the root file using the meta-standard's cascade rules (nearer file overrides root values). Cascade resolution is owned by CF01; this standard inherits whatever the meta-validator produces and validates the merged `docs` block.
+Monorepo cascade: a nested `apss.yaml` inside a sub-package layers over the root file using the meta-standard's cascade rules (nearer file overrides root values). Cascade resolution is owned by CF01; this standard inherits whatever the meta-validator produces and validates the merged `docs` block.
 
 ### 3.2 Default Behavior (absence equals enabled)
 
 The standard follows an absence-equals-enabled convention modelled on
-environment variables. If `APSS.yaml` does not exist, or it exists but
+environment variables. If `apss.yaml` does not exist, or it exists but
 contains no `docs` key, or a `docs` block exists but a given
 sub-section is absent, the validator MUST apply the documented
 defaults for the absent surface. The validator MUST NOT error on a
@@ -114,7 +114,7 @@ missing config file, a missing `docs` section, or a missing
 sub-section. Zero-config works; every flag defaults to the recommended
 setting and every feature defaults to enabled.
 
-A key only appears in `APSS.yaml` to do one of two things:
+A key only appears in `apss.yaml` to do one of two things:
 
 1. Opt OUT of a default-on rule with `disable: true`.
 2. Override a non-`disable` default value (for example, change
@@ -125,19 +125,19 @@ into a real or example config: it is the default that the validator
 already applies for absence. Tooling and documentation MUST NOT
 generate `disable: false` boilerplate, and operators reading examples
 MUST be shown the empty-section happy path, not a `disable: false`
-crutch. The smallest valid `APSS.yaml` for a project that adopts every
+crutch. The smallest valid `apss.yaml` for a project that adopts every
 default of this standard is:
 
 ```yaml
 docs: {}
 ```
 
-or simply no `APSS.yaml` at all (CF01 owns whether the file is
+or simply no `apss.yaml` at all (CF01 owns whether the file is
 required for other reasons).
 
 ### 3.3 Schema
 
-The schema is normative. **Scalar fields not listed here under a KNOWN nested section MUST be rejected with `unknown-config-field`.** Unknown nested keys under `docs` (for example `docs.<some-future-slug>`) are tolerated per Section 3.4 forward-compatibility. The schema below shows the `docs` block as it appears inside `APSS.yaml`. Every line below is a default that the validator applies for absence; per Section 3.2 a project only writes a key to opt out (`disable: true`) or to override a non-`disable` value. The surrounding top-level structure (schema declaration, project identity, standard activation) is owned by CF01.
+The schema is normative. **Scalar fields not listed here under a KNOWN nested section MUST be rejected with `unknown-config-field`.** Unknown nested keys under `docs` (for example `docs.<some-future-slug>`) are tolerated per Section 3.4 forward-compatibility. The schema below shows the `docs` block as it appears inside `apss.yaml`. Every line below is a default that the validator applies for absence; per Section 3.2 a project only writes a key to opt out (`disable: true`) or to override a non-`disable` value. The surrounding top-level structure (schema declaration, project identity, standard activation) is owned by CF01.
 
 **Path resolution (normative).** Every doc-type location key in this
 schema is **docs-root-relative**: the validator resolves it as
@@ -230,7 +230,7 @@ docs:
 ### 3.4 Configurability rules
 
 - Every rule listed in this spec is on by default. A project disables one rule by setting `disable: true` in the smallest scope that contains it (a single nested key under `docs`, or the top-level `docs.disable` to disable all doc validation).
-- `disable: false` is the default the validator applies for absence and MUST NOT be written into real or example configs. Examples in this spec and in `examples/APSS.yaml` MUST show empty sections (or no section at all) for surfaces a project does not override.
+- `disable: false` is the default the validator applies for absence and MUST NOT be written into real or example configs. Examples in this spec and in `examples/apss.yaml` MUST show empty sections (or no section at all) for surfaces a project does not override.
 - There MUST NOT be per feature `optional` flags scattered through the spec. The shape is always: an implicit default-on with `disable: true` as the opt-out, plus that section's content.
 - Adding a new doc type does not require changing this spec. A new substandard MAY claim its own `docs.<slug>` key; the parent standard MUST tolerate unknown `docs.<slug>` keys for forward compatibility, even though it MUST reject unknown scalar fields inside known sections.
 - Substandard keys use the substandard's kebab-case slug (for example `north-star`, not `north_star`). Scalar field names inside each section remain snake_case to match the Rust struct contract.
@@ -239,7 +239,7 @@ docs:
 
 The CLI and hook MUST emit a single human-readable diagnostic, never a panic, when the config file is malformed:
 
-- `invalid-apss-yaml`: `APSS.yaml` is not valid YAML. Severity: error.
+- `invalid-apss-yaml`: `apss.yaml` is not valid YAML. Severity: error.
 - `unknown-config-field`: a known section under `docs` contains an unknown scalar field. Severity: error.
 
 Both diagnostics MUST include the file path, the offending field or token, and a one-line hint.
@@ -546,7 +546,7 @@ The standard does not require code files to be auto generated with backlinks. It
 
 The parent standard defines the doc type registry. Each doc type is implemented as a substandard under `substandards/`. The shipped doc types are:
 
-| Doc type | Substandard | Default location (resolved with default `docs.root: docs`) | Config key in `APSS.yaml` |
+| Doc type | Substandard | Default location (resolved with default `docs.root: docs`) | Config key in `apss.yaml` |
 |----------|-------------|------------------|---------------------------|
 | Architecture Decision Records | `APS-V1-0003.AD01` | `docs/adrs/` (literal config value: `adrs`) | `docs.adr` |
 | North Star (Mission, Vision, Position) | `APS-V1-0003.PV01` | `docs/north-star.md` (literal config value: `north-star.md`) | `docs.north-star` |
@@ -593,7 +593,7 @@ typically remain `active` for long stretches.
 A new doc type is added by:
 
 1. Creating a substandard under `substandards/<ID>-<slug>/`.
-2. Documenting its nested key under `docs` in `APSS.yaml`, using the substandard's kebab-case slug (so `docs.<slug>`). Per Section 3.2 the validator MUST treat the absence of `docs.<slug>` as default-on; the substandard's spec MUST NOT instruct projects to write `disable: false`. Any non-`disable` fields are owned by the substandard. Substandards do NOT register their own top-level slug in the meta-standard registry.
+2. Documenting its nested key under `docs` in `apss.yaml`, using the substandard's kebab-case slug (so `docs.<slug>`). Per Section 3.2 the validator MUST treat the absence of `docs.<slug>` as default-on; the substandard's spec MUST NOT instruct projects to write `disable: false`. Any non-`disable` fields are owned by the substandard. Substandards do NOT register their own top-level slug in the meta-standard registry.
 3. Registering the doc type in this section's table.
 4. Defining the substandard's diagnostic codes using the human readable scheme described in Section 10.
 
@@ -621,10 +621,10 @@ aps run docs uninstall [<repo-root>]
 Behavior:
 
 - `install` MUST:
-  1. If `APSS.yaml` does not exist, ask the meta-standard's installer (CF01) to create it with the project's selected standards. If `APSS.yaml` exists, MUST NOT overwrite it; only add a `docs:` block if missing, leaving every other section untouched. The added `docs:` block uses the documented defaults from Section 3.3.
+  1. If `apss.yaml` does not exist, ask the meta-standard's installer (CF01) to create it with the project's selected standards. If `apss.yaml` exists, MUST NOT overwrite it; only add a `docs:` block if missing, leaving every other section untouched. The added `docs:` block uses the documented defaults from Section 3.3.
   2. Install the git pre-commit hook described in Section 9.4. If a pre-commit hook already exists, MUST insert an `apss-docs-hook` block delimited by sentinel comments rather than replace the user's hook.
   3. Print the resolved doc type registry so the operator sees which doc types just became active.
-- `uninstall` MUST remove only the `apss-docs-hook` block from the pre-commit hook and MUST leave `APSS.yaml` (and its `docs:` block) and the rest of the hook intact.
+- `uninstall` MUST remove only the `apss-docs-hook` block from the pre-commit hook and MUST leave `apss.yaml` (and its `docs:` block) and the rest of the hook intact.
 - Both commands MUST be idempotent.
 
 ### 9.2 Validator contract
@@ -634,7 +634,7 @@ The validator is the source of truth. The hook and the standalone CLI MUST call 
 **Inputs**:
 
 - `repo_root: Path`: absolute path to the repository root.
-- `config: ApssConfig`: the merged `docs` block from `APSS.yaml` (after CF01 cascade resolution), with defaults applied for any missing fields.
+- `config: ApssConfig`: the merged `docs` block from `apss.yaml` (after CF01 cascade resolution), with defaults applied for any missing fields.
 - `scope: ValidationScope`: one of:
   - `Full`: walk the entire docs root and every doc type directory.
   - `Changed { staged_paths: Vec<PathBuf> }`: only inspect docs touched by the staged change set; the hook MUST use this scope.
@@ -717,7 +717,7 @@ Existing numeric or composite codes (for example, `ADR01-001`) MAY be retained a
 
 | Code | Severity | Domain | Description |
 |------|----------|--------|-------------|
-| `invalid-apss-yaml` | error | Config | `APSS.yaml` is not valid YAML. |
+| `invalid-apss-yaml` | error | Config | `apss.yaml` is not valid YAML. |
 | `unknown-config-field` | error | Config | A known section under `docs` contains an unknown scalar field. |
 | `readme-missing` | error | DOC02 | Directory missing `README.md`. |
 | `claude-md-missing` | warning | DOC02 | Directory missing `CLAUDE.md`. |
@@ -762,7 +762,7 @@ Every command MUST emit the same diagnostics shape as the validator (Section 9.2
 
 ## Appendix A: Validation Checklist
 
-- [ ] `APSS.yaml` valid, or absent for defaults; the `docs:` block (if present) parses against Section 3.3.
+- [ ] `apss.yaml` valid, or absent for defaults; the `docs:` block (if present) parses against Section 3.3.
 - [ ] Every docs directory has `README.md` with a valid `## Index` section.
 - [ ] `.md` files under the docs root have closed frontmatter with the configured fields.
 - [ ] `CLAUDE.md` and `AGENTS.md` present per docs directory.

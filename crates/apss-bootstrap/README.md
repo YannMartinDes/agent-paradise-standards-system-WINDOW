@@ -16,14 +16,14 @@ cargo install apss
 ## Usage
 
 ```bash
-apss init --standard <slug>   # generate APSS.yaml declaring the standard
+apss init --standard <slug>   # generate apss.yaml declaring the standard
 apss install     # resolve standards from crates.io, write apss.lock, install git hooks
 apss validate    # validate the project (also runs from the pre-commit hook)
 apss status      # show project configuration and status
 apss run <standard> <command>   # run a standard's command
 ```
 
-Commit `APSS.yaml` and `apss.lock`. The generated `.apss/` runtime is build output and stays out of git. Contributors to your repo can read, edit, and commit without installing this CLI.
+Commit `apss.yaml` and `apss.lock`. The generated `.apss/` runtime is build output and stays out of git. Contributors to your repo can read, edit, and commit without installing this CLI.
 
 ## Documentation
 

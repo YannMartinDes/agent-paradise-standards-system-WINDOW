@@ -1,13 +1,13 @@
 //! Project Configuration (APS-V1-0000.CF01)
 //!
-//! Validates `APSS.yaml` project configuration files and ensures standards
+//! Validates `apss.yaml` project configuration files and ensures standards
 //! define typed configuration surfaces via the `StandardConfig` trait.
 //!
 //! ## Dual Validation Role
 //!
 //! CF01 validates two things:
 //!
-//! 1. **Consumer `APSS.yaml` files**  -  schema, field types, version requirements,
+//! 1. **Consumer `apss.yaml` files**  -  schema, field types, version requirements,
 //!    cascading consistency, and standard-specific config blocks.
 //!
 //! 2. **Standard config compliance**  -  ensures every standard in the APS repo
@@ -19,7 +19,7 @@
 //! use apss_core::project_config_validation::validate_project_config;
 //! use std::path::Path;
 //!
-//! let diags = validate_project_config(Path::new("APSS.yaml"));
+//! let diags = validate_project_config(Path::new("apss.yaml"));
 //! if diags.has_errors() {
 //!     eprintln!("{diags}");
 //!     std::process::exit(1);
@@ -36,7 +36,7 @@ use std::path::Path;
 
 /// Error codes for CF01 validation.
 pub mod error_codes {
-    // --- Consumer APSS.yaml validation ---
+    // --- Consumer apss.yaml validation ---
 
     /// `schema` field missing or not `"apss.project/v1"`.
     pub const CF_MISSING_SCHEMA: &str = "CF_MISSING_SCHEMA";
@@ -65,10 +65,10 @@ pub mod error_codes {
     /// A substandard code doesn't match `[A-Z]{2}\d{2}`.
     pub const CF_INVALID_SUBSTANDARD_CODE: &str = "CF_INVALID_SUBSTANDARD_CODE";
 
-    /// An experimental standard is explicitly declared in `APSS.yaml`.
+    /// An experimental standard is explicitly declared in `apss.yaml`.
     pub const CF_EXPERIMENT_DECLARED: &str = "CF_EXPERIMENT_DECLARED";
 
-    /// A child `APSS.yaml` contains a `[workspace]` section.
+    /// A child `apss.yaml` contains a `[workspace]` section.
     pub const CF_WORKSPACE_IN_CHILD: &str = "CF_WORKSPACE_IN_CHILD";
 
     /// Child and root `apss_version` values differ.
@@ -86,16 +86,16 @@ pub mod error_codes {
     /// `[standards]` section exists but is empty.
     pub const CF_EMPTY_STANDARDS: &str = "CF_EMPTY_STANDARDS";
 
-    /// `APSS.yaml` exists but no `apss.lock` found.
+    /// `apss.yaml` exists but no `apss.lock` found.
     pub const CF_NO_LOCKFILE: &str = "CF_NO_LOCKFILE";
 
-    /// `APSS.yaml` was modified more recently than `apss.lock`.
+    /// `apss.yaml` was modified more recently than `apss.lock`.
     pub const CF_LOCKFILE_STALE: &str = "CF_LOCKFILE_STALE";
 
-    /// Failed to parse the APSS.yaml file.
+    /// Failed to parse the apss.yaml file.
     pub const CF_PARSE_ERROR: &str = "CF_PARSE_ERROR";
 
-    /// The APSS.yaml file was not found.
+    /// The apss.yaml file was not found.
     pub const CF_FILE_NOT_FOUND: &str = "CF_FILE_NOT_FOUND";
 
     /// An included config file (via `config = { include = "..." }`) was not found.
@@ -233,7 +233,7 @@ fn validate_config_fields(path: &Path) -> Diagnostics {
     diags
 }
 
-/// Validate a child `APSS.yaml` in a workspace context.
+/// Validate a child `apss.yaml` in a workspace context.
 pub fn validate_child_config(child_path: &Path, root_config: &ProjectConfig) -> Diagnostics {
     // Use validate_config_fields (not validate_project_config) to skip lockfile
     // checks  -  in a workspace, the lockfile lives at the root, not in each child.
@@ -252,7 +252,7 @@ pub fn validate_child_config(child_path: &Path, root_config: &ProjectConfig) -> 
                 "Child configuration must not contain a [workspace] section",
             )
             .with_path(child_path)
-            .with_hint("Only the root APSS.yaml may define workspace members"),
+            .with_hint("Only the root apss.yaml may define workspace members"),
         );
     }
 
@@ -517,7 +517,7 @@ fn validate_lockfile(config_path: &Path, diags: &mut Diagnostics) {
                 diags.push(
                     Diagnostic::warning(
                         error_codes::CF_LOCKFILE_STALE,
-                        "APSS.yaml is newer than apss.lock. Run 'apss install' to update",
+                        "apss.yaml is newer than apss.lock. Run 'apss install' to update",
                     )
                     .with_path(config_path),
                 );
@@ -836,7 +836,7 @@ project:
 
     #[test]
     fn test_validate_missing_file() {
-        let diags = validate_project_config(Path::new("/nonexistent/APSS.yaml"));
+        let diags = validate_project_config(Path::new("/nonexistent/apss.yaml"));
         assert!(diags.has_errors());
         assert!(
             diags

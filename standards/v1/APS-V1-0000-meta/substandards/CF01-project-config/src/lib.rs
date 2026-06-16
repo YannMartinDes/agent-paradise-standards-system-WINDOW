@@ -14,7 +14,7 @@ mod tests {
 
     #[test]
     fn wrapper_reexports_project_config_validation() {
-        let diags = validate_project_config(std::path::Path::new("/definitely/missing/APSS.yaml"));
+        let diags = validate_project_config(std::path::Path::new("/definitely/missing/apss.yaml"));
         assert!(diags.has_errors());
     }
 }

@@ -15,7 +15,7 @@
 | [APS-V1-0002 Architecture Fitness](standards/v1/APS-V1-0002-architecture-fitness/docs/00_overview.md) | Declarative architectural assertions (threshold, dependency, structural rules) over topology artifacts, with per-dimension scoring. | `apss run architecture-fitness validate .` |
 | [APS-V1-0003 Documentation](standards/v1/APS-V1-0003-documentation/docs/00_overview.md) | Documentation and context engineering: ADR enforcement, README index validation, agent context files. | `apss run documentation validate .` |
 
-The slug in the first command word is the **canonical slug** and must match the standard key in your `APSS.yaml`.
+The slug in the first command word is the **canonical slug** and must match the standard key in your `apss.yaml`.
 
 ### Experimental
 
@@ -41,14 +41,14 @@ APSS uses crates.io as its distribution transport (see [ADR-0002](standards/v1/A
 cargo install apss
 
 # In your repo: declare one or more standards, then install
-apss init --standard code-topology   # generates APSS.yaml (set the scaffolded id to APS-V1-0001)
+apss init --standard code-topology   # generates apss.yaml (set the scaffolded id to APS-V1-0001)
 apss install     # resolves standards from crates.io, writes apss.lock, builds a project-local binary, installs the git hook
 apss validate    # validate the project config and standard structure (also runs from the pre-commit hook)
 apss status      # show project configuration and status
 apss run code-topology analyze .   # run a standard's command through the project-local binary
 ```
 
-`APSS.yaml` lists standards by their canonical slug and id, for example:
+`apss.yaml` lists standards by their canonical slug and id, for example:
 
 ```yaml
 standards:
@@ -63,7 +63,7 @@ For offline or air-gapped installs, build a bundle locally and point the install
 apss install --bundle-dir /path/to/bundles
 ```
 
-Commit `APSS.yaml` and `apss.lock`. The generated `.apss/` runtime is build output and stays out of git. Contributors to your repo can read, edit, and commit without installing the global CLI. A step-by-step guide is in [docs/runbooks/visualize-your-codebase.runbook.md](docs/runbooks/visualize-your-codebase.runbook.md).
+Commit `apss.yaml` and `apss.lock`. The generated `.apss/` runtime is build output and stays out of git. Contributors to your repo can read, edit, and commit without installing the global CLI. A step-by-step guide is in [docs/runbooks/visualize-your-codebase.runbook.md](docs/runbooks/visualize-your-codebase.runbook.md).
 
 The full lifecycle is specified in the [DI01 distribution substandard](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/01_spec.md) and the [package manager lifecycle doc](standards/v1/APS-V1-0000-meta/substandards/DI01-distribution/docs/03_package_manager_lifecycle.md).
 

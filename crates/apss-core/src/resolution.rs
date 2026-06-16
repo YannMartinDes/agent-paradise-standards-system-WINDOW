@@ -1,6 +1,6 @@
 //! Cascading configuration resolution for monorepos.
 //!
-//! When a project uses workspace-style `APSS.yaml` files, child configs
+//! When a project uses workspace-style `apss.yaml` files, child configs
 //! inherit from and override the root config. This module handles the
 //! merge logic and version resolution.
 //!
@@ -56,7 +56,7 @@ pub enum ResolutionError {
 /// A fully resolved project configuration after cascading merge.
 #[derive(Debug, Clone)]
 pub struct ResolvedProjectConfig {
-    /// Project identity (from the nearest `APSS.yaml`).
+    /// Project identity (from the nearest `apss.yaml`).
     pub project: ProjectInfo,
 
     /// Resolved standards with merged config.
@@ -65,7 +65,7 @@ pub struct ResolvedProjectConfig {
     /// Resolved tool configuration.
     pub tool: ToolConfig,
 
-    /// Which `APSS.yaml` files contributed to this resolution.
+    /// Which `apss.yaml` files contributed to this resolution.
     pub source_files: Vec<PathBuf>,
 }
 
@@ -98,7 +98,7 @@ pub struct ResolvedStandard {
 // Resolution Logic
 // ============================================================================
 
-/// Resolve a project configuration from a single `APSS.yaml` (no cascading).
+/// Resolve a project configuration from a single `apss.yaml` (no cascading).
 pub fn resolve_single(config: ProjectConfig, source: PathBuf) -> ResolvedProjectConfig {
     let standards = config
         .standards
@@ -313,7 +313,7 @@ standards:
     #[test]
     fn test_resolve_single() {
         let config = minimal_root();
-        let resolved = resolve_single(config, PathBuf::from("APSS.yaml"));
+        let resolved = resolve_single(config, PathBuf::from("apss.yaml"));
 
         assert_eq!(resolved.project.name, "root");
         assert_eq!(resolved.standards.len(), 1);
@@ -331,9 +331,9 @@ standards:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 
@@ -382,9 +382,9 @@ project:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 
@@ -402,9 +402,9 @@ project:
 
         let result = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         );
 
         assert!(matches!(
@@ -424,9 +424,9 @@ project:
 
         let result = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         );
 
         assert!(matches!(
@@ -513,9 +513,9 @@ tool:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 
@@ -557,9 +557,9 @@ tool:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 
@@ -597,9 +597,9 @@ project:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 
@@ -642,9 +642,9 @@ tool:
 
         let resolved = merge_configs(
             &root,
-            Path::new("APSS.yaml"),
+            Path::new("apss.yaml"),
             &child,
-            Path::new("packages/a/APSS.yaml"),
+            Path::new("packages/a/apss.yaml"),
         )
         .unwrap();
 

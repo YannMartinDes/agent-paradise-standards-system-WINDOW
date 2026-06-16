@@ -69,7 +69,7 @@ The APSS project config is user-owned. Humans and agents may edit it directly.
 Examples:
 
 ```text
-APSS.yaml
+apss.yaml
 apss.lock
 ```
 
@@ -99,7 +99,7 @@ Managed files SHOULD use this header shape, adapted to the file format:
 ```text
 Managed by APSS. Do not edit manually.
 Regenerate with: apss install
-Source: APSS.yaml
+Source: apss.yaml
 Docs: https://github.com/AgentParadise/agent-paradise-standards-system
 ```
 
@@ -190,7 +190,7 @@ Recommended layout:
 
 ```text
 repo/
-  APSS.yaml
+  apss.yaml
   apss.lock
   .apss/
     bin/
@@ -220,7 +220,7 @@ The external cache approach is preferred because it speeds repeated installs whi
 
 APSS SHOULD install managed git hooks during `apss install`.
 
-Hook installation is controlled by `tool.hooks` in `APSS.yaml`:
+Hook installation is controlled by `tool.hooks` in `apss.yaml`:
 
 ```yaml
 tool:

@@ -36,7 +36,7 @@ pub const ID: &str = "APS-V1-0002";
 /// Canonical slug (matches `standard.toml` `slug`). This MUST equal the
 /// `slug` in `standard.toml` and the slug registered in [`register`], because
 /// the composed consumer runner matches the registered slug against the
-/// `APSS.yaml` standard key. Aliases such as `fitness` live only in the dev
+/// `apss.yaml` standard key. Aliases such as `fitness` live only in the dev
 /// CLI's `resolve_standard`, never here.
 pub const SLUG: &str = "architecture-fitness";
 
@@ -1832,7 +1832,7 @@ impl FitnessValidator {
 ///
 /// The registered slug is the canonical [`SLUG`] (`architecture-fitness`)
 /// because the composed consumer runner matches the registered slug against
-/// the `APSS.yaml` standard key. Dev-CLI aliases (`fitness`, etc.) live only
+/// the `apss.yaml` standard key. Dev-CLI aliases (`fitness`, etc.) live only
 /// in `aps-cli::resolve_standard`.
 pub fn register(registry: &mut dyn apss_core::registry::StandardRegistry) {
     registry.register(

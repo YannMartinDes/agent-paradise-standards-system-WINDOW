@@ -27,7 +27,7 @@ rationale = "ADR substandard derives backlink and reference-extraction regexes f
 
 [[dependencies.allowed_external]]
 crate = "serde"
-rationale = "Workspace dependency for deserialising APSS.yaml's docs section into typed config structs"
+rationale = "Workspace dependency for deserialising apss.yaml's docs section into typed config structs"
 
 [[dependencies.allowed_external]]
 crate = "serde_json"
@@ -35,7 +35,7 @@ rationale = "Workspace dependency used by the validator for machine-readable dia
 
 [[dependencies.allowed_external]]
 crate = "serde_yaml"
-rationale = "Workspace dependency for parsing APSS.yaml during config load"
+rationale = "Workspace dependency for parsing apss.yaml during config load"
 
 [[dependencies.allowed_external]]
 crate = "walkdir"

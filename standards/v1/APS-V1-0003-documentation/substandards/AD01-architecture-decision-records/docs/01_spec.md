@@ -17,7 +17,7 @@ This substandard's vocabulary, lifecycle, naming guidance, and shipped template 
 
 The docs root (default `docs/`) MUST contain an ADR directory (default `adrs/`).
 
-- Configurable via `docs.adr.directory` in `APSS.yaml`
+- Configurable via `docs.adr.directory` in `apss.yaml`
 - Full path: `<docs.root>/<docs.adr.directory>/` (e.g., `docs/adrs/`)
 - The ADR directory SHOULD contain a `README.md` with a `## Index` section listing all ADRs (managed by the parent standard's index generation)
 
@@ -39,7 +39,7 @@ Every file in the ADR directory MUST match the configured naming pattern, with t
 
 - The number MUST be zero-padded to at least 3 digits (maximum 5 digits)
 - The name MUST use kebab-case (lowercase letters, digits, hyphens)
-- Configurable via `docs.adr.naming_pattern` in `APSS.yaml`
+- Configurable via `docs.adr.naming_pattern` in `apss.yaml`
 
 ## 3. Front Matter (ADR01-missing-frontmatter, ADR01-invalid-status)
 
@@ -206,7 +206,7 @@ reference other ADRs without tripping the validator).
 (`ADR01-superseded-reference`), warning
 (`ADR01-deprecated-reference`).
 
-**Controlled by:** `docs.backlinking.disable` in `APSS.yaml`. When backlinking
+**Controlled by:** `docs.backlinking.disable` in `apss.yaml`. When backlinking
 is disabled all three codes are suppressed.
 
 ### 6.6 Migration from `ADR01-dead-reference`

@@ -45,7 +45,7 @@ This substandard defines:
 - The bootstrap CLI binary used for project onboarding (canonical binary name
   is being resolved in repo issue 64; this spec refers to it as the
   "bootstrap" where the name can be avoided)
-- The installation workflow that reads the `APSS.yaml` manifest defined by
+- The installation workflow that reads the `apss.yaml` manifest defined by
   CF01 and resolves, fetches, locks, and composes the standards it declares
 - The lockfile format (`apss.lock`)
 - Code generation for composed project-local binaries
@@ -216,8 +216,8 @@ this spec uses `<bootstrap>` where the name can be avoided.
 
 | Command | Description |
 |---------|-------------|
-| `<bootstrap> init` | Create `APSS.yaml` |
-| `<bootstrap> install` | Read `APSS.yaml`, resolve, run per-standard install contracts, build composed binary |
+| `<bootstrap> init` | Create `apss.yaml` |
+| `<bootstrap> install` | Read `apss.yaml`, resolve, run per-standard install contracts, build composed binary |
 | `<bootstrap> install --check` | Report what install would do without writing |
 | `<bootstrap> install --locked` | CI mode, fail if lockfile would change |
 | `<bootstrap> install --update <slug>` | Update one standard |
@@ -241,7 +241,7 @@ prints a helpful error directing the user to run `<bootstrap> install`.
 
 ## 4. Installation Workflow
 
-The unified installer reads the `APSS.yaml` manifest (CF01 Section 2),
+The unified installer reads the `apss.yaml` manifest (CF01 Section 2),
 resolves the standards it declares, drives each resolved standard's install
 contract, then composes the project-local binary. CF01 owns the manifest;
 DI01 owns resolution and the lockfile; each standard owns its install
@@ -249,7 +249,7 @@ contract. The pipeline below stitches the three together.
 
 ### 4.1 Install Pipeline
 
-1. Parse and validate `APSS.yaml` via CF01 (with cascade applied for
+1. Parse and validate `apss.yaml` via CF01 (with cascade applied for
    workspaces). Refuse to proceed on any error-severity diagnostic.
 2. Resolve version ranges against crates.io (Cargo is the registry, ADR-0002),
    or against a local bundle directory or local repository when the offline
@@ -280,7 +280,7 @@ registry MUST be a no-op (no file rewrites, no rebuild, exit zero).
 
 ### 4.2 Promoted Experiment Resolution
 
-DI01 MUST support experimental standards declared in `APSS.yaml`. If an
+DI01 MUST support experimental standards declared in `apss.yaml`. If an
 `EXP-V1-XXXX` package exists in the registry, resolution proceeds normally
 and the resulting package is marked experimental in the lockfile.
 
@@ -293,14 +293,14 @@ includes:
 - The requested experimental ID and slug.
 - The resolved official ID and slug.
 - The compatibility mode.
-- A recommendation to update `APSS.yaml`.
+- A recommendation to update `apss.yaml`.
 
 If compatibility is `manual-migration-required`, DI01 MUST fail resolution
 with an error diagnostic and a migration path. It MUST NOT silently skip the
 standard, drop validation, or leave the project unenforced.
 
 Promoted alias resolution MUST be deterministic. Given the same registry
-index, `APSS.yaml`, and lockfile, resolution MUST produce the same official
+index, `apss.yaml`, and lockfile, resolution MUST produce the same official
 package and diagnostics.
 
 ### 4.3 Locked Mode
@@ -349,7 +349,7 @@ The boundary between CF01 and DI01 is explicit:
 ### 5.1 Location
 
 The lockfile MUST be at `apss.lock` in the project root, next to
-`APSS.yaml`.
+`apss.yaml`.
 
 ### 5.2 Schema
 
@@ -390,7 +390,7 @@ The `source` field supports:
 If DI01 resolves a promoted experiment, `apss.lock` MUST record both the
 requested experimental identity and the resolved official identity. This
 allows future installs to detect whether the operator has updated
-`APSS.yaml`, and it makes audit trails clear during experiment promotion.
+`apss.yaml`, and it makes audit trails clear during experiment promotion.
 
 ---
 
@@ -412,7 +412,7 @@ allows future installs to detect whether the operator has updated
 
 ### 6.2 Determinism
 
-Code generation MUST be deterministic: the same `APSS.yaml` and `apss.lock`
+Code generation MUST be deterministic: the same `apss.yaml` and `apss.lock`
 MUST produce identical generated files.
 
 ---
@@ -427,7 +427,7 @@ Consumer projects SHOULD add:
 ```
 
 And SHOULD commit:
-- `APSS.yaml`
+- `apss.yaml`
 - `apss.lock`
 
 ---
@@ -448,7 +448,7 @@ any change to system crates (`apss-core`, `aps-cli`, `apss`).
 
 Standard and substandard versions are independent: a standard MAY be at
 `3.0.0` while the system is at `1.2.0`. Consumer projects pin standard
-versions in `APSS.yaml` via semver ranges.
+versions in `apss.yaml` via semver ranges.
 
 Experimental standards MAY be distributed and pinned with `EXP-V1-XXXX`
 identities. Promotion to an official standard creates a new official identity

@@ -61,7 +61,7 @@ pub struct AdrValidator {
 
 impl AdrValidator {
     /// Load the ADR validator from a repository root.
-    /// Reads `APSS.yaml` for configuration.
+    /// Reads `apss.yaml` for configuration.
     pub fn load(repo_root: &Path) -> Result<Self, config::ConfigError> {
         let apss_config = config::load_config(repo_root)?;
         Ok(Self {

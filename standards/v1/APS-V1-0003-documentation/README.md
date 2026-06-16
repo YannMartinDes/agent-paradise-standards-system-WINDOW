@@ -18,7 +18,7 @@ This is an official, active standard under APS-V1-0003 (promoted from EXP-V1-000
 
 ## Examples
 
-- [`examples/`](examples/): minimal `APSS.yaml` docs section, example ADR template, and example readmes.
+- [`examples/`](examples/): minimal `apss.yaml` docs section, example ADR template, and example readmes.
 
 ## Tests
 
@@ -33,8 +33,8 @@ apss run documentation index [path]          # preview generated index tables (d
 apss run documentation index [path] --write  # write index tables into README.md files
 ```
 
-In `APSS.yaml` and `apss run`, use the canonical slug `documentation` (it must
-match the standard key in `APSS.yaml`). The `docs` and `doc` spellings are
+In `apss.yaml` and `apss run`, use the canonical slug `documentation` (it must
+match the standard key in `apss.yaml`). The `docs` and `doc` spellings are
 accepted only by the development CLI `apss-dev`, not by the composed project
 binary, so `apss run docs ...` fails in a consumer project.
 
@@ -46,7 +46,7 @@ subcommands are planned for a follow-up and are not yet implemented.
 
 ## Configuration
 
-This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only). It contributes the `docs:` section of `APSS.yaml`, owned by the meta-standard (APS-V1-0000.CF01). Zero-config works: absence of a key means the documented default applies (per Section 3.2 of the spec). A key is written only to opt out (`disable: true`) or to override a non-`disable` default.
+This standard's canonical slug is `documentation` (the `docs` and `doc` spellings are dev-CLI aliases only). It contributes the `docs:` section of `apss.yaml`, owned by the meta-standard (APS-V1-0000.CF01). Zero-config works: absence of a key means the documented default applies (per Section 3.2 of the spec). A key is written only to opt out (`disable: true`) or to override a non-`disable` default.
 
 ## Status
 
