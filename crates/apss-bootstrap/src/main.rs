@@ -145,7 +145,8 @@ fn cmd_status() -> i32 {
                 .and_then(|t| t.bin_dir.as_deref())
                 .unwrap_or(".apss/bin"),
         )
-        .join("apss");
+        .join(format!("apss{}", std::env::consts::EXE_SUFFIX));
+
 
     println!();
     if binary_path.exists() {
@@ -203,7 +204,8 @@ fn cmd_run(args: &[String]) -> i32 {
         .as_ref()
         .and_then(|t| t.bin_dir.as_deref())
         .unwrap_or(".apss/bin");
-    let binary_path = project_root.join(bin_dir).join("apss");
+    let bin_name = format!("apss{}", std::env::consts::EXE_SUFFIX);
+    let binary_path = project_root.join(bin_dir).join(bin_name);
 
     if !binary_path.exists() {
         eprintln!("Composed binary not found at {}", binary_path.display());
