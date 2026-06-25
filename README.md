@@ -1,6 +1,9 @@
 ### My notes
 *I just update the install.rs and main.rs to be able to generate and use properly the apss.exe in window.* 
 
+Command to run :  
+`cargo install --path .\crates\apss-bootstrap --force`
+
 # Agent Paradise Standards System (APSS)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
