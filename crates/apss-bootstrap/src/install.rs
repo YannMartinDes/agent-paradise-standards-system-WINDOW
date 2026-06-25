@@ -230,12 +230,23 @@ pub fn run(args: InstallArgs) -> i32 {
         }
     }
 
+    
     // 6. Copy binary to bin_dir
+    let bin_name = format!(
+        "{}{}",
+        apss_core::distribution::BIN_NAME,
+        std::env::consts::EXE_SUFFIX
+    );
+
+    println!("DEBUG bin_name = {}", bin_name);
+
     let target_binary = build_dir
         .join("target")
         .join("release")
-        .join(apss_core::distribution::BIN_NAME);
-    let output_binary = bin_dir.join(apss_core::distribution::BIN_NAME);
+        .join(&bin_name);
+
+    let output_binary = bin_dir.join(&bin_name); 
+
 
     if target_binary.exists() {
         if let Err(e) = std::fs::copy(&target_binary, &output_binary) {
